@@ -1,4 +1,5 @@
 import { DualGestureSource, KeyboardMouseSource, Script, Vec3 } from 'playcanvas';
+
 import { canWalkTo } from './room';
 
 /**
@@ -13,6 +14,9 @@ export class WalkController extends Script {
     private readonly forward = new Vec3();
     private readonly candidate = new Vec3();
     private readonly lastSafe = new Vec3();
+    // read() entrega cambios por fotograma (+1 al pulsar, -1 al soltar); al sumarlos se obtiene el estado sostenido.
+    private readonly keyHeld: number[] = [];
+    private readonly buttonHeld = [0, 0, 0];
     private yaw = 0;
     private pitch = 0;
     private stepPhase = 0;
@@ -23,6 +27,10 @@ export class WalkController extends Script {
     private readonly lookSensitivity = 0.11;
     private readonly bobAmount = 0.018;
     private readonly bobRate = Math.PI * 3.6;
+    /** Pausa el recorrido (p. ej. durante la inspección) sin dejar de leer la entrada, para no perder teclas sostenidas. */
+    paused = false;
+    /** Bloquea solo la mirada: el arrastre queda libre para otra interacción y se puede seguir caminando. */
+    lookLocked = false;
 
     initialize(): void {
         const canvas = this.app.graphicsDevice.canvas;
@@ -41,17 +49,27 @@ export class WalkController extends Script {
 
     update(dt: number): void {
         const { keyCode } = KeyboardMouseSource;
-        const { key, button, mouse } = this.keyboardMouse.read();
+        const frame = this.keyboardMouse.read();
+        const { mouse } = frame;
+        const key = this.keyHeld;
+        const button = this.buttonHeld;
+        frame.key.forEach((delta, i) => (key[i] = (key[i] ?? 0) + delta));
+        frame.button.forEach((delta, i) => (button[i] += delta));
         const { leftInput, rightInput } = this.touchControls.read();
+        if (this.paused) {
+            return;
+        }
 
         // Mirada: clic y arrastre en desktop; gesto táctil en la mitad derecha de la pantalla.
-        if (button[0] > 0) {
-            this.yaw -= mouse[0] * this.lookSensitivity;
-            this.pitch = Math.max(-68, Math.min(68, this.pitch - mouse[1] * this.lookSensitivity));
+        if (!this.lookLocked) {
+            if (button[0] > 0) {
+                this.yaw -= mouse[0] * this.lookSensitivity;
+                this.pitch = Math.max(-68, Math.min(68, this.pitch - mouse[1] * this.lookSensitivity));
+            }
+            this.yaw -= rightInput[0] * this.lookSensitivity;
+            this.pitch = Math.max(-68, Math.min(68, this.pitch - rightInput[1] * this.lookSensitivity));
+            this.entity.setLocalEulerAngles(this.pitch, this.yaw, 0);
         }
-        this.yaw -= rightInput[0] * this.lookSensitivity;
-        this.pitch = Math.max(-68, Math.min(68, this.pitch - rightInput[1] * this.lookSensitivity));
-        this.entity.setLocalEulerAngles(this.pitch, this.yaw, 0);
 
         const keyboardX = key[keyCode.D] - key[keyCode.A] + (key[keyCode.RIGHT] - key[keyCode.LEFT]);
         const keyboardForward = key[keyCode.W] - key[keyCode.S] + (key[keyCode.UP] - key[keyCode.DOWN]);

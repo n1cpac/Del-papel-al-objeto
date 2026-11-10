@@ -1,4 +1,6 @@
-import { AppBase, Color, Entity } from 'playcanvas';
+import type { AppBase } from 'playcanvas';
+import { Color, Entity } from 'playcanvas';
+
 import { WalkController } from './walk-controller';
 
 export function createVisitorCamera(app: AppBase): Entity {
@@ -13,7 +15,7 @@ export function createVisitorCamera(app: AppBase): Entity {
     camera.setPosition(8.05, 1.7, 9.15);
     camera.setLocalEulerAngles(0, -19, 0);
     camera.addComponent('script');
-    camera.script.create(WalkController);
+    camera.script?.create(WalkController);
 
     return camera;
 }

@@ -1,4 +1,4 @@
-import { AppBase } from 'playcanvas';
+import type { AppBase } from 'playcanvas';
 
 export function mountHud(app: AppBase): void {
     const root = document.querySelector<HTMLElement>('#experience-hud');

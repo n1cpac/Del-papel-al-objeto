@@ -17,7 +17,11 @@ import {
 
 import './starter.css';
 import { createVisitorCamera } from './experience/controls';
+import { mountDebug } from './experience/debug';
 import { mountHud } from './experience/hud';
+import { createInspector } from './experience/inspect';
+import { mountMobileFullscreen } from './experience/mobile-fullscreen';
+import { mountPieceFocus } from './experience/piece-focus';
 import { buildRoom } from './experience/room';
 
 const canvas = document.getElementById('application-canvas');
@@ -46,7 +50,9 @@ app.init(createOptions);
 app.setCanvasFillMode(FILLMODE_FILL_WINDOW);
 app.setCanvasResolution(RESOLUTION_AUTO);
 
-const resize = (): void => app.resizeCanvas();
+const resize = (): void => {
+    app.resizeCanvas();
+};
 window.addEventListener('resize', resize);
 app.on('destroy', () => window.removeEventListener('resize', resize));
 
@@ -58,6 +64,9 @@ light.setLocalEulerAngles(48, 28, 0);
 app.root.addChild(light);
 
 app.start();
-buildRoom(app);
-createVisitorCamera(app);
+const pedestals = buildRoom(app);
+const camera = createVisitorCamera(app);
 mountHud(app);
+mountPieceFocus(app, camera, pedestals, createInspector(app, camera));
+mountDebug(app, camera);
+mountMobileFullscreen(canvas);

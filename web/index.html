@@ -22,8 +22,31 @@
                 <span class="desktop-help">Moverse: WASD / flechas <i>·</i> Mirar: clic y arrastre del mouse</span>
                 <span class="mobile-help">Moverse: joystick izquierdo <i>·</i> Mirar: arrastrar a la derecha</span>
                 <span class="free-roam">Exploración libre</span>
+                <span class="inspect-help"
+                    >Girar: arrastrar <i>·</i> Acercar: <span class="desktop-help">rueda o + / −</span
+                    ><span class="mobile-help">pellizco</span> <i>·</i> Salir:
+                    <span class="desktop-help">alejarse, Esc o ×</span><span class="mobile-help">×</span></span
+                >
             </footer>
         </main>
+        <div id="piece-label" class="piece-label" hidden>
+            <span id="piece-label-name" class="piece-label-name"></span>
+            <button id="piece-interact" type="button" class="piece-interact">
+                Interactuar <kbd class="desktop-help">E</kbd>
+            </button>
+        </div>
+        <section id="piece-panel" class="piece-panel" role="dialog" aria-labelledby="piece-panel-title" hidden>
+            <button id="piece-panel-close" type="button" class="piece-panel-close" aria-label="Cerrar cédula">×</button>
+            <div id="piece-panel-body"></div>
+        </section>
+        <div id="debug-crosshair" class="debug-crosshair" aria-hidden="true" hidden></div>
+        <button id="debug-readout" type="button" class="debug-readout" title="Clic para copiar" hidden></button>
+        <div id="rotate-overlay" class="rotate-overlay" role="alert">
+            <div class="rotate-icon" aria-hidden="true"></div>
+            <p class="rotate-title">Gira tu teléfono</p>
+            <p>Esta experiencia está pensada para verse en horizontal.</p>
+            <p class="rotate-hint">Toca la pantalla para continuar en horizontal.</p>
+        </div>
         <div class="joystick-layer" aria-hidden="true">
             <div id="joystick-base" class="joystick-base" hidden></div>
             <div id="joystick-knob" class="joystick-knob" hidden></div>

@@ -1,4 +1,8 @@
-import { AppBase, Color, Entity, StandardMaterial, Vec3 } from 'playcanvas';
+import type { AppBase, Vec3 } from 'playcanvas';
+import { Color, Entity, StandardMaterial } from 'playcanvas';
+
+import type { Piece } from './pieces';
+import { pieces, piecesById } from './pieces';
 
 type MaterialSet = {
     wall: StandardMaterial;
@@ -118,22 +122,25 @@ function addPedestal(
     const pedestal = new Entity(id);
     pedestal.setLocalPosition(x, 0, z);
     parent.addChild(pedestal);
-    addBox(pedestal, `${id}:plinto`, [0, 0.38, 0], [1.12, 0.84, 1.02], materials.white);
-    addBox(pedestal, `${id}:acento`, [0, 0.83, 0], [1.12, 0.06, 1.02], accent);
+    // La etiqueta 'base' separa el pedestal de la pieza que se inspecciona.
+    addBox(pedestal, `${id}:plinto`, [0, 0.38, 0], [1.12, 0.84, 1.02], materials.white).tags.add('base');
+    addBox(pedestal, `${id}:acento`, [0, 0.83, 0], [1.12, 0.06, 1.02], accent).tags.add('base');
     return pedestal;
 }
 
-function addBook(parent: Entity, x: number, z: number, materials: MaterialSet): void {
+function addBook(parent: Entity, x: number, z: number, materials: MaterialSet): Entity {
     const book = addPedestal(parent, 'Pieza: tomo de manga', x, z, materials, materials.stations.B);
     addBox(book, 'Bloque de páginas', [0, 1.18, 0], [0.48, 0.68, 0.11], materials.paper);
     addBox(book, 'Portada provisional del manga', [0, 1.19, 0.067], [0.48, 0.68, 0.035], materials.book);
     addBox(book, 'Lomo del tomo', [-0.22, 1.19, -0.03], [0.05, 0.68, 0.12], materials.red);
+    return book;
 }
 
-function addDeck(parent: Entity, x: number, z: number, materials: MaterialSet): void {
+function addDeck(parent: Entity, x: number, z: number, materials: MaterialSet): Entity {
     const deck = addPedestal(parent, 'Pieza: deck de cartas', x, z, materials, materials.stations.C);
     addBox(deck, 'Deck de Kaiba (provisional)', [0, 1.22, 0], [0.36, 0.48, 0.27], materials.card);
     addBox(deck, 'Frente de la caja', [0, 1.22, 0.143], [0.3, 0.39, 0.012], materials.red);
+    return deck;
 }
 
 function addFigure(
@@ -144,37 +151,40 @@ function addFigure(
     body: StandardMaterial,
     hair: StandardMaterial,
     materials: MaterialSet
-): void {
+): Entity {
     const figure = addPedestal(parent, id, x, z, materials, materials.stations.C);
     addSphere(figure, `${id}:cabeza`, [0, 1.27, 0], [0.35, 0.34, 0.32], materials.book);
     addBox(figure, `${id}:cabello`, [0, 1.43, 0], [0.34, 0.13, 0.32], hair);
     addBox(figure, `${id}:torso`, [0, 0.96, 0], [0.3, 0.34, 0.24], body);
     addBox(figure, `${id}:pierna-izquierda`, [-0.09, 0.7, 0], [0.12, 0.12, 0.18], materials.dark);
     addBox(figure, `${id}:pierna-derecha`, [0.09, 0.7, 0], [0.12, 0.12, 0.18], materials.dark);
+    return figure;
 }
 
-function addPlush(parent: Entity, x: number, z: number, materials: MaterialSet): void {
+function addPlush(parent: Entity, x: number, z: number, materials: MaterialSet): Entity {
     const plush = addPedestal(parent, 'Pieza: peluche de Hatsune Miku', x, z, materials, materials.stations.D);
     addSphere(plush, 'Miku: cabeza provisional', [0, 1.28, 0], [0.39, 0.36, 0.34], materials.white);
     addBox(plush, 'Miku: flequillo', [0, 1.46, -0.015], [0.36, 0.13, 0.25], materials.teal);
     addBox(plush, 'Miku: coleta izquierda', [-0.29, 1.14, 0], [0.13, 0.62, 0.16], materials.teal);
     addBox(plush, 'Miku: coleta derecha', [0.29, 1.14, 0], [0.13, 0.62, 0.16], materials.teal);
     addBox(plush, 'Miku: cuerpo textil', [0, 0.9, 0], [0.28, 0.38, 0.22], materials.stations.D);
+    return plush;
 }
 
-export function buildRoom(app: AppBase): void {
+/** Construye la sala y devuelve el pedestal de cada pieza. */
+export function buildRoom(app: AppBase): Map<Piece, Entity> {
     const materials = makeMaterials();
-    const room = new Entity('Sala · L · 84 m²');
+    const room = new Entity('Sala · L · 144 m²');
     app.root.addChild(room);
 
-    // Huella ampliada: brazo superior de 12 x 4 m y brazo derecho de 6 x 6 m.
-    addBox(room, 'Piso · brazo horizontal', [6, -0.1, 2], [12, 0.2, 4], materials.floor);
+    // Huella: brazo de exposición de 18 x 6 m (x -6…12, z -2…4) y brazo de entrada de 6 x 6 m.
+    addBox(room, 'Piso · brazo horizontal', [3, -0.1, 1], [18, 0.2, 6], materials.floor);
     addBox(room, 'Piso · brazo de entrada', [9, -0.1, 7], [6, 0.2, 6], materials.floor);
 
-    addWall(room, 'Muro norte', 6, 0, 12, 0.16, materials);
-    addWall(room, 'Muro este', 12, 5, 0.16, 10, materials);
-    addWall(room, 'Muro oeste', 0, 2, 0.16, 4, materials);
-    addWall(room, 'Muro interior horizontal', 3, 4, 6, 0.16, materials);
+    addWall(room, 'Muro norte', 3, -2, 18, 0.16, materials);
+    addWall(room, 'Muro este', 12, 4, 0.16, 12, materials);
+    addWall(room, 'Muro oeste', -6, 1, 0.16, 6, materials);
+    addWall(room, 'Muro interior horizontal', 0, 4, 12, 0.16, materials);
     addWall(room, 'Muro interior vertical', 6, 7, 0.16, 6, materials);
 
     // Muro sur con dos umbrales diferenciados para entrada y salida.
@@ -185,32 +195,40 @@ export function buildRoom(app: AppBase): void {
     addBox(room, 'Umbral · salida', [10.525, 0.015, 10], [1.45, 0.03, 0.42], materials.stations.E);
 
     // Guía central del recorrido; las piezas quedan cerca del muro norte.
-    addBox(room, 'Guía de recorrido · pasillo vertical', [8.9, 0.012, 6.7], [0.08, 0.025, 6.6], materials.stations.A);
-    addBox(room, 'Guía de recorrido · brazo horizontal', [6.45, 0.012, 3.05], [8.7, 0.025, 0.08], materials.stations.C);
+    addBox(room, 'Guía de recorrido · pasillo vertical', [8.9, 0.012, 6.2], [0.08, 0.025, 7.6], materials.stations.A);
+    addBox(room, 'Guía de recorrido · brazo horizontal', [2.2, 0.012, 2.4], [13.4, 0.025, 0.08], materials.stations.C);
 
     // Paneles y pedestales se pegan al perímetro para liberar el espacio central.
+    const { manga, deck, yuji, gon, miku } = piecesById;
     addSign(room, 'A', 7.15, 8.05, materials.stations.A, materials);
-    addSign(room, 'B', 10.65, 0.42, materials.stations.B, materials);
-    addSign(room, 'C', 7.1, 0.42, materials.stations.C, materials);
-    addSign(room, 'D', 3.25, 0.42, materials.stations.D, materials);
-    addSign(room, 'E', 0.9, 0.42, materials.stations.E, materials);
+    addSign(room, 'B', manga.x, signZ, materials.stations.B, materials);
+    addSign(room, 'C', yuji.x, signZ, materials.stations.C, materials);
+    addSign(room, 'D', miku.x, signZ, materials.stations.D, materials);
+    addSign(room, 'E', closure.x, signZ, materials.stations.E, materials);
 
     // Piezas del brazo horizontal, orientadas hacia el corredor central.
-    addBook(room, 10.65, 1.28, materials);
-    addDeck(room, 9.05, 1.28, materials);
-    addFigure(room, 'Pieza: Funko Yuji', 7.4, 1.28, materials.red, materials.dark, materials);
-    addFigure(room, 'Pieza: Funko Gon', 5.75, 1.28, materials.green, materials.teal, materials);
-    addPlush(room, 3.25, 1.28, materials);
+    const pedestals = new Map<Piece, Entity>([
+        [manga, addBook(room, manga.x, manga.z, materials)],
+        [deck, addDeck(room, deck.x, deck.z, materials)],
+        [yuji, addFigure(room, 'Pieza: Funko Yuji', yuji.x, yuji.z, materials.red, materials.dark, materials)],
+        [gon, addFigure(room, 'Pieza: Funko Gon', gon.x, gon.z, materials.green, materials.teal, materials)],
+        [miku, addPlush(room, miku.x, miku.z, materials)]
+    ]);
 
     // Paneles sin contenido curatorial final.
     addBox(room, 'Soporte de bienvenida', [7.15, 0.47, 7.62], [1.3, 0.94, 0.12], materials.white);
     addBox(room, 'Acento de bienvenida', [7.15, 0.94, 7.54], [1.3, 0.08, 0.04], materials.stations.A);
-    addBox(room, 'Soporte de cierre', [0.9, 0.47, 1.5], [1.4, 0.94, 0.12], materials.white);
-    addBox(room, 'Acento de cierre', [0.9, 0.94, 1.42], [1.4, 0.08, 0.04], materials.stations.E);
+    addBox(room, 'Soporte de cierre', [closure.x, 0.47, closure.z], [1.4, 0.94, 0.12], materials.white);
+    addBox(room, 'Acento de cierre', [closure.x, 0.94, closure.z - 0.08], [1.4, 0.08, 0.04], materials.stations.E);
+
+    return pedestals;
 }
 
+const signZ = -1.58;
+const closure = { x: -3.6, z: -0.5 };
+
 export function isInsideGallery(position: Vec3): boolean {
-    const withinOuterBounds = position.x >= 0.42 && position.x <= 11.58 && position.z >= 0.42 && position.z <= 10.35;
+    const withinOuterBounds = position.x >= -5.58 && position.x <= 11.58 && position.z >= -1.58 && position.z <= 10.35;
     const insideLFootprint = position.z <= 3.55 || position.x >= 6.45;
     const insideEntrance = position.z <= 10.35 && position.x >= 7.32 && position.x <= 8.78;
     const insideExit = position.z <= 10.35 && position.x >= 9.77 && position.x <= 11.27;
@@ -218,12 +236,8 @@ export function isInsideGallery(position: Vec3): boolean {
 }
 
 const displayKeepOuts = [
-    { x: 10.65, z: 1.28, halfX: 0.72, halfZ: 0.64 },
-    { x: 9.05, z: 1.28, halfX: 0.72, halfZ: 0.64 },
-    { x: 7.4, z: 1.28, halfX: 0.72, halfZ: 0.64 },
-    { x: 5.75, z: 1.28, halfX: 0.72, halfZ: 0.64 },
-    { x: 3.25, z: 1.28, halfX: 0.72, halfZ: 0.64 },
-    { x: 0.9, z: 1.5, halfX: 0.88, halfZ: 0.62 },
+    ...pieces.map(({ x, z }) => ({ x, z, halfX: 0.72, halfZ: 0.64 })),
+    { ...closure, halfX: 0.88, halfZ: 0.62 },
     { x: 7.15, z: 7.83, halfX: 0.82, halfZ: 0.74 }
 ];
 
