@@ -1,10 +1,4 @@
-import {
-    AppBase,
-    Color,
-    Entity,
-    StandardMaterial,
-    Vec3
-} from 'playcanvas';
+import { AppBase, Color, Entity, StandardMaterial, Vec3 } from 'playcanvas';
 
 type MaterialSet = {
     wall: StandardMaterial;
@@ -85,11 +79,26 @@ function addSphere(
     return entity;
 }
 
-function addWall(parent: Entity, name: string, x: number, z: number, width: number, depth: number, materials: MaterialSet): void {
+function addWall(
+    parent: Entity,
+    name: string,
+    x: number,
+    z: number,
+    width: number,
+    depth: number,
+    materials: MaterialSet
+): void {
     addBox(parent, name, [x, 1.65, z], [width, 3.3, depth], materials.wall);
 }
 
-function addSign(parent: Entity, label: string, x: number, z: number, accent: StandardMaterial, materials: MaterialSet): void {
+function addSign(
+    parent: Entity,
+    label: string,
+    x: number,
+    z: number,
+    accent: StandardMaterial,
+    materials: MaterialSet
+): void {
     const sign = new Entity(`Estación ${label}`);
     sign.setLocalPosition(x, 0, z);
     parent.addChild(sign);
@@ -98,7 +107,14 @@ function addSign(parent: Entity, label: string, x: number, z: number, accent: St
     addBox(sign, `${label}:base`, [0, 0.12, 0], [0.7, 0.22, 0.58], materials.trim);
 }
 
-function addPedestal(parent: Entity, id: string, x: number, z: number, materials: MaterialSet, accent: StandardMaterial): Entity {
+function addPedestal(
+    parent: Entity,
+    id: string,
+    x: number,
+    z: number,
+    materials: MaterialSet,
+    accent: StandardMaterial
+): Entity {
     const pedestal = new Entity(id);
     pedestal.setLocalPosition(x, 0, z);
     parent.addChild(pedestal);
@@ -120,7 +136,15 @@ function addDeck(parent: Entity, x: number, z: number, materials: MaterialSet): 
     addBox(deck, 'Frente de la caja', [0, 1.22, 0.143], [0.3, 0.39, 0.012], materials.red);
 }
 
-function addFigure(parent: Entity, id: string, x: number, z: number, body: StandardMaterial, hair: StandardMaterial, materials: MaterialSet): void {
+function addFigure(
+    parent: Entity,
+    id: string,
+    x: number,
+    z: number,
+    body: StandardMaterial,
+    hair: StandardMaterial,
+    materials: MaterialSet
+): void {
     const figure = addPedestal(parent, id, x, z, materials, materials.stations.C);
     addSphere(figure, `${id}:cabeza`, [0, 1.27, 0], [0.35, 0.34, 0.32], materials.book);
     addBox(figure, `${id}:cabello`, [0, 1.43, 0], [0.34, 0.13, 0.32], hair);
@@ -191,4 +215,27 @@ export function isInsideGallery(position: Vec3): boolean {
     const insideEntrance = position.z <= 10.35 && position.x >= 7.32 && position.x <= 8.78;
     const insideExit = position.z <= 10.35 && position.x >= 9.77 && position.x <= 11.27;
     return withinOuterBounds && (insideLFootprint || insideEntrance || insideExit);
+}
+
+const displayKeepOuts = [
+    { x: 10.65, z: 1.28, halfX: 0.72, halfZ: 0.64 },
+    { x: 9.05, z: 1.28, halfX: 0.72, halfZ: 0.64 },
+    { x: 7.4, z: 1.28, halfX: 0.72, halfZ: 0.64 },
+    { x: 5.75, z: 1.28, halfX: 0.72, halfZ: 0.64 },
+    { x: 3.25, z: 1.28, halfX: 0.72, halfZ: 0.64 },
+    { x: 0.9, z: 1.5, halfX: 0.88, halfZ: 0.62 },
+    { x: 7.15, z: 7.83, halfX: 0.82, halfZ: 0.74 }
+];
+
+export function canWalkTo(position: Vec3): boolean {
+    if (!isInsideGallery(position)) {
+        return false;
+    }
+
+    const visitorRadius = 0.32;
+    return !displayKeepOuts.some(
+        (display) =>
+            Math.abs(position.x - display.x) < display.halfX + visitorRadius &&
+            Math.abs(position.z - display.z) < display.halfZ + visitorRadius
+    );
 }

@@ -26,7 +26,10 @@ if (!(canvas instanceof HTMLCanvasElement)) {
 }
 
 const device = await createGraphicsDevice(canvas);
-device.maxPixelRatio = Math.min(window.devicePixelRatio || 1, window.matchMedia('(pointer: coarse)').matches ? 1.4 : 1.6);
+device.maxPixelRatio = Math.min(
+    window.devicePixelRatio || 1,
+    window.matchMedia('(pointer: coarse)').matches ? 1.4 : 1.6
+);
 
 const createOptions = new AppOptions();
 createOptions.graphicsDevice = device;
@@ -58,4 +61,3 @@ app.start();
 buildRoom(app);
 createVisitorCamera(app);
 mountHud(app);
-

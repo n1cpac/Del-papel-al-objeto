@@ -1,10 +1,5 @@
-import {
-    DualGestureSource,
-    KeyboardMouseSource,
-    Script,
-    Vec3
-} from 'playcanvas';
-import { isInsideGallery } from './room';
+import { DualGestureSource, KeyboardMouseSource, Script, Vec3 } from 'playcanvas';
+import { canWalkTo } from './room';
 
 /**
  * Recorrido peatonal sin física: mantiene la altura del visitante y orienta el movimiento en el plano horizontal.
@@ -58,8 +53,8 @@ export class WalkController extends Script {
         this.pitch = Math.max(-68, Math.min(68, this.pitch - rightInput[1] * this.lookSensitivity));
         this.entity.setLocalEulerAngles(this.pitch, this.yaw, 0);
 
-        const keyboardX = (key[keyCode.D] - key[keyCode.A]) + (key[keyCode.RIGHT] - key[keyCode.LEFT]);
-        const keyboardForward = (key[keyCode.W] - key[keyCode.S]) + (key[keyCode.UP] - key[keyCode.DOWN]);
+        const keyboardX = key[keyCode.D] - key[keyCode.A] + (key[keyCode.RIGHT] - key[keyCode.LEFT]);
+        const keyboardForward = key[keyCode.W] - key[keyCode.S] + (key[keyCode.UP] - key[keyCode.DOWN]);
         const touchX = leftInput[0];
         const touchForward = -leftInput[1];
         let moveX = keyboardX + touchX;
@@ -72,7 +67,7 @@ export class WalkController extends Script {
 
         const moving = magnitude > 0.08;
         const walkSpeed = touchX !== 0 || touchForward !== 0 ? this.mobileSpeed : this.speed;
-        const radians = this.yaw * Math.PI / 180;
+        const radians = (this.yaw * Math.PI) / 180;
         this.forward.set(-Math.sin(radians), 0, -Math.cos(radians));
         this.right.set(Math.cos(radians), 0, -Math.sin(radians));
 
@@ -81,23 +76,23 @@ export class WalkController extends Script {
         const current = this.entity.getPosition();
         this.candidate.set(current.x + deltaX, this.eyeHeight, current.z + deltaZ);
 
-        if (isInsideGallery(this.candidate)) {
+        if (canWalkTo(this.candidate)) {
             this.entity.setPosition(this.candidate);
         } else {
             // Permite deslizar a lo largo de los muros y evita atravesar el ángulo interior de la L.
             this.candidate.set(current.x + deltaX, this.eyeHeight, current.z);
-            if (isInsideGallery(this.candidate)) {
+            if (canWalkTo(this.candidate)) {
                 this.entity.setPosition(this.candidate);
             } else {
                 this.candidate.set(current.x, this.eyeHeight, current.z + deltaZ);
-                if (isInsideGallery(this.candidate)) {
+                if (canWalkTo(this.candidate)) {
                     this.entity.setPosition(this.candidate);
                 }
             }
         }
 
         const position = this.entity.getPosition();
-        if (isInsideGallery(position)) {
+        if (canWalkTo(position)) {
             this.lastSafe.copy(position);
         } else {
             this.entity.setPosition(this.lastSafe);
@@ -116,4 +111,3 @@ export class WalkController extends Script {
         this.touchControls.destroy();
     }
 }
-
