@@ -75,8 +75,8 @@ Antes de cerrar cada pieza se deberán registrar sus datos de identificación y 
 
 | Día | Enfoque | Entregable |
 |---|---|---|
-| 1 | Definir plano de sala, flujo libre, controles, textos prioritarios y criterios de aceptación. | Mapa de estaciones y lista de tareas cerrada. |
-| 2 | Montar la sala base y validar movimiento e interacción en escritorio y móvil. | Recorrido 3D navegable con estaciones identificadas. |
+| 1 | **Completado:** cerrar geometría, estaciones, piezas, secuencia principal, controles previstos y criterios de diseño. | Plano cenital de referencia y decisiones documentadas en este README. |
+| 2 | Montar sala en L, estaciones provisionales y controles de recorrido para desktop y móvil. | Blockout 3D de la sala con navegación libre. |
 | 3 | Integrar paneles, cédulas, orientación y contenido de las cinco estaciones. | Exposición completa en contenido. |
 | 4 | Integrar modelos provisionales o finales; añadir inspección de piezas y comparador. | Piezas explorables y comparación funcional. |
 | 5 | Implementar actividad de clasificación y cierre curatorial. | Interacción final conectada con los objetivos de aprendizaje. |
@@ -94,10 +94,136 @@ Antes de cerrar cada pieza se deberán registrar sus datos de identificación y 
 
 ## Ejecución
 
-Las instrucciones de ejecución se completarán cuando se confirme la estructura del proyecto PlayCanvas y su forma de publicación. Esta sección debe incluir, como mínimo, requisitos, configuración, ejecución local o apertura del proyecto en PlayCanvas, publicación y actualización de modelos.
+La aplicación está en `web/` y usa PlayCanvas Engine, TypeScript y Vite. Requiere Node.js 22.23.2 o posterior.
+
+```powershell
+cd web
+npm install
+npm run dev
+```
+
+Vite inicia el servidor de desarrollo en `http://localhost:5173`. Para generar el sitio estático, ejecuta `npm run build` desde `web/`; la salida queda en `web/dist/`. Los modelos optimizados `.glb` se ubican en `web/public/models/` y las texturas externas en `web/public/textures/`. Consulta [`web/README.md`](web/README.md) para los comandos y la estructura completa.
 
 ## Créditos y fuentes
 
 - Guion museológico, curatorial, museográfico, educativo y de mediación: documento del proyecto *Del papel al objeto*.
 - Modelado y recursos visuales: equipo del proyecto (por completar).
 - Referencias y créditos específicos de piezas, imágenes y materiales: por completar antes de publicar.
+
+## Día 1 · Plano y criterios de diseño
+
+### Plano cenital de referencia
+
+El plano actualizado para orientar la construcción de la sala es `docs/plano_recorrido.png`. Presenta una sala en L de aproximadamente 40 m² (envolvente de 8 × 7 m con un vacío de 4 × 4 m), con el brazo horizontal extendido hacia la izquierda. La entrada y la salida están en la parte inferior.
+
+![Plano cenital del recorrido](docs/plano_recorrido.png)
+
+El recorrido inicia en A. Desde la entrada, sube por el brazo vertical hasta B y continúa de **derecha a izquierda** por las estaciones B → C → D → E. Esta dirección retoma el sentido de lectura del manga. La ruta principal está señalizada; el espacio de exposición debe permitir detenerse y explorar sin bloquear el paso.
+
+### Piezas representadas
+
+| Estación | Piezas | Cantidad |
+|---|---|---:|
+| B. El papel, el origen | Tomo de manga *Yu-Gi-Oh!* | 1 |
+| C. Del personaje al producto | Deck de Kaiba, Funko Pop Yuji Itadori #1111 y Funko Pop Gon Freecss #651 | 3 |
+| D. El ídolo que se vuelve objeto | Peluche de Hatsune Miku | 1 |
+| **Total** |  | **5** |
+
+### Criterios para construir y revisar la sala
+
+1. **Secuencia legible:** la ruta se entiende en el orden A → B → C → D → E; en el brazo horizontal avanza de derecha a izquierda.
+2. **Orientación coherente:** el visitante reconoce entrada y salida en la parte inferior, y entiende el cambio desde el brazo vertical hacia el horizontal.
+3. **Cinco piezas identificables:** se distinguen el tomo, el deck, las dos figuras Funko y el peluche en sus estaciones correspondientes.
+4. **Fidelidad al guion:** la pieza de manga corresponde a *Yu-Gi-Oh!*; los objetos, rótulos y actividad final coinciden con el guion curatorial.
+5. **Circulación despejada:** el paso entre entrada, estaciones y salida se mantiene libre; pedestales y paneles no invaden el recorrido.
+6. **Comprensible para público nuevo:** cada estación identifica el objeto en lenguaje cotidiano y ofrece contexto antes de usar términos especializados.
+7. **Exploración sin bloqueo:** la ruta está señalada, pero permite detenerse, observar y reanudar el recorrido sin perder la orientación.
+8. **Legibilidad en móvil:** rótulos e indicaciones se leen en pantalla pequeña; las acciones no dependen de apuntar con precisión.
+9. **Estética equilibrada:** los acentos geek/pop dan identidad sin competir con las piezas ni saturar el espacio.
+10. **Rendimiento:** la sala prioriza modelos y recursos visuales optimizados, especialmente para dispositivos móviles.
+
+### Distribución de estaciones
+
+| Orden | Estación | Ubicación según plano | Función |
+|---:|---|---|---|
+| 1 | A. Bienvenida | Brazo vertical, junto a la entrada | Orientación y pregunta guía. |
+| 2 | B. El papel, el origen | Unión con el brazo horizontal, extremo derecho | Presentar el tomo de manga. |
+| 3 | C. Del personaje al producto | Brazo horizontal, zona central | Reunir el deck y las dos figuras para comparar formatos. |
+| 4 | D. El ídolo que se vuelve objeto | Brazo horizontal, hacia la izquierda | Presentar el peluche de Hatsune Miku. |
+| 5 | E. ¿Qué hace una colección? | Brazo horizontal, extremo izquierdo | Cerrar con la actividad y la pregunta de colección. |
+
+### Lista cerrada de tareas del Día 1
+
+- [x] Adoptar como referencia la sala en L de aproximadamente 40 m², con el brazo horizontal hacia la izquierda.
+- [x] Ubicar entrada y salida en el borde inferior.
+- [x] Fijar el recorrido principal A → B → C → D → E y su avance de derecha a izquierda por el brazo horizontal.
+- [x] Asignar las cinco piezas a sus estaciones: tomo de manga en B; deck y dos figuras en C; peluche en D.
+- [x] Definir A como bienvenida y E como cierre con la actividad de criterio de colección.
+- [x] Establecer el movimiento previsto: WASD/flechas y ratón en escritorio; joystick virtual y arrastre en móvil; clic/toque para interactuar.
+- [x] Fijar la prioridad de contenidos: identificar cada objeto con palabras claras, dar contexto breve y dejar términos especializados como información complementaria.
+- [x] Acordar la dirección visual: cultura geek/pop con acentos moderados y las piezas como foco.
+- [x] Definir criterios para revisar circulación, orientación, legibilidad, accesibilidad inicial y rendimiento móvil.
+- [x] Registrar qué debe comprobarse al construir la sala 3D.
+
+**Estado del Día 1: cerrado.** El plano y las decisiones anteriores son la base de trabajo del Día 2. Las comprobaciones siguientes pertenecen a la validación del prototipo y no reabren esta etapa salvo que aparezca un problema concreto de navegación o espacio.
+
+### Validaciones para el prototipo 3D
+
+- Comprobar que el giro desde A hacia B y el avance de derecha a izquierda se sienten naturales con la cámara.
+- Verificar que estaciones y objetos no estrechan el paso ni se tapan entre sí.
+- Revisar tamaño y contraste de rótulos en escritorio y móvil.
+- Confirmar los datos y la disponibilidad de cada pieza antes de publicar; el guion señala que la adquisición del manga es propuesta.
+
+### Criterio de cierre del Día 1
+
+El Día 1 se considera completado porque hay un plano cenital único de referencia, están ubicadas y nombradas las cinco estaciones, se contabilizan las cinco piezas, se fijaron el orden del recorrido y los controles previstos, y quedaron documentadas las condiciones que se revisarán en el prototipo.
+
+
+## Día 2 · Sala base y navegación
+
+### Estado
+
+La infraestructura y el blockout están en `web/`, con PlayCanvas Engine, TypeScript y Vite. Tras revisar la sensación de espacio, la sala del prototipo se amplió a 84 m² y las piezas se acercaron al perímetro para despejar el centro. La cámara se fijó a 1,70 m con desplazamiento peatonal horizontal y balanceo muy leve al caminar. Los cinco objetos siguen representados por geometría provisional; faltan los GLB finales, las cédulas curatoriales y las interacciones de cada estación.
+
+### Tareas completadas
+
+- [x] Crear el proyecto local dentro del repositorio sin reemplazar el README, el guion ni el plano existentes.
+- [x] Instalar dependencias y generar `package-lock.json` para fijar versiones.
+- [x] Definir título, idioma y metadatos de la experiencia en HTML.
+- [x] Documentar requisitos, comandos de ejecución y compilación.
+- [x] Preparar ubicaciones para modelos GLB y texturas externas.
+- [x] Sustituir el cubo de demostración por el blockout de la sala en L.
+- [x] Colocar cinco estaciones y representaciones geométricas provisionales de las piezas.
+- [x] Añadir navegación con teclado/ratón y joystick/gesto táctil.
+- [x] Limitar el movimiento a la huella de la sala y permitir atravesar los umbrales de entrada/salida.
+- [x] Ajustar cámara y movimiento a una sensación peatonal a 1,70 m.
+- [x] Ampliar la sala a 84 m² y llevar estaciones y piezas hacia el perímetro.
+- [x] Retirar el Inspector de PlayCanvas, quitar el overlay A–E e integrar el logo con resplandor de borde.
+- [x] Señalizar las piezas con flechas flotantes visibles a distancia; mostrar nombre y acción al aproximarse y mirarlas.
+- [x] Pausar el movimiento del recorrido durante la inspección en dispositivos táctiles, para que arrastrar la pieza no mueva al visitante.
+- [x] Incorporar el plano cenital en un cuadro mural al comienzo del pasillo de entrada para orientar al visitante antes de recorrer las estaciones.
+- [x] Mantener la cédula de inspección anclada a la derecha y reajustar el encuadre de la pieza al espacio libre en distintas dimensiones de pantalla.
+- [x] Quitar la solicitud de pantalla completa al entrar desde móvil; la experiencia permanece en la ventana normal del navegador.
+- [x] Crear pantalla inicial responsive con banner completo, opciones, carga y bienvenida temporizada.
+
+### Decisiones de implementación
+
+- **Huella del prototipo:** sala de 12 × 10 m con un cuadrante de 6 × 6 m abierto (84 m²); el brazo horizontal se extiende hacia la izquierda. El plano cenital del Día 1 conserva la distribución conceptual original de 40 m²; este blockout amplía esa propuesta tras la revisión de escala.
+- **Recorrido:** inicio junto a la entrada en A; avance sugerido hacia B y luego de derecha a izquierda por C, D y E.
+- **Montaje:** pedestales y paneles se acercan a los muros; la franja central queda abierta para circular.
+- **Representación temporal:** formas geométricas sencillas para el tomo, el deck, las dos figuras y el peluche.
+- **Escritorio:** WASD o flechas para moverse; clic sostenido y arrastre del ratón para mirar.
+- **Móvil:** joystick virtual del lado izquierdo para moverse; arrastre táctil en el lado derecho para mirar.
+- **Sensación de marcha:** altura ocular de 1,70 m, velocidad peatonal, movimiento horizontal sin vuelo y balanceo de cámara sutil.
+- **Interfaz:** se retiró el Inspector de desarrollo; el overlay con la secuencia A–E se eliminó, el logo ocupa la esquina superior izquierda y los controles quedan abajo a la izquierda.
+- **Inicio de experiencia:** el menú se reemplaza por una carga de 3 segundos sin ocultar el banner; después, el banner se transforma a su lugar habitual y un fade revela al visitante entre las puertas. El mensaje de bienvenida permanece 4 segundos y luego desaparece suavemente. Resolución y nivel de volumen se guardan localmente; el volumen quedará listo para cuando se integre música.
+- **Señalización interactiva:** cada objeto interactuable tiene una flecha 3D pequeña sobre la pieza, con movimiento vertical continuo y sutil. Al ser parte de la sala, los muros la ocultan cuando no hay línea de visión. Al acercarse y mirar el objeto aparece además su nombre y la acción correspondiente.
+- **Inspección móvil:** al abrir un objeto se pausa el recorrido mientras dura la inspección, evitando que el gesto de arrastre mueva simultáneamente al visitante.
+- **Composición adaptable:** la cédula permanece a la derecha; el objeto se sitúa y escala en el área disponible a su izquierda. El encuadre se recalcula si cambia el tamaño o la orientación de la ventana.
+- **Área de inspección:** el encuadre también reserva el espacio vertical del logo y la banda de instrucciones para que no tapen el objeto.
+- **Pantalla móvil:** la experiencia permanece en la ventana normal del navegador; si el teléfono está en vertical, el aviso indica girarlo manualmente.
+- **Orientación en sala:** el plano cenital se muestra enmarcado en la pared este, al inicio del pasillo de entrada, mirando hacia el recorrido; permite anticipar el flujo A → B → C → D → E antes de llegar a la primera estación.
+
+### Siguiente implementación
+
+Revisar la sensación de marcha, las flechas de orientación y la inspección en desktop y en un móvil real. Luego integrar textos curatoriales, paneles y acciones de interacción para las estaciones B–E, manteniendo la pauta de señalización para todo elemento interactuable.

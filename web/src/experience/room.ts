@@ -111,6 +111,25 @@ function addSign(
     addBox(sign, `${label}:base`, [0, 0.12, 0], [0.7, 0.22, 0.58], materials.trim);
 }
 
+function addWayfindingMap(app: AppBase, parent: Entity, materials: MaterialSet): void {
+    // Marco mural al comienzo del pasillo de entrada, mirando hacia el recorrido.
+    const frame = addBox(parent, 'Marco · plano del recorrido', [11.82, 1.72, 8.45], [2.02, 1.25, 0.12], materials.trim);
+    frame.setLocalEulerAngles(0, -90, 0);
+    const mapMaterial = material('#fffdf8');
+    const map = addBox(parent, 'Plano del recorrido · orientación', [11.74, 1.72, 8.45], [1.78, 1, 0.035], mapMaterial);
+    map.setLocalEulerAngles(0, -90, 0);
+
+    app.assets.loadFromUrl(`${import.meta.env.BASE_URL}images/plano-recorrido.png`, 'texture', (error, asset) => {
+        if (error || !asset?.resource) {
+            console.warn('No se pudo cargar el plano mural del recorrido.', error);
+            return;
+        }
+        mapMaterial.diffuseMap = asset.resource;
+        mapMaterial.emissive = new Color(0.16, 0.16, 0.16);
+        mapMaterial.update();
+    });
+}
+
 function addPedestal(
     parent: Entity,
     id: string,
@@ -126,6 +145,20 @@ function addPedestal(
     addBox(pedestal, `${id}:plinto`, [0, 0.38, 0], [1.12, 0.84, 1.02], materials.white).tags.add('base');
     addBox(pedestal, `${id}:acento`, [0, 0.83, 0], [1.12, 0.06, 1.02], accent).tags.add('base');
     return pedestal;
+}
+
+function addInteractionArrow(parent: Entity, piece: Piece, accent: StandardMaterial): Entity {
+    const arrow = new Entity(`Señal interactiva · ${piece.name}`);
+    arrow.setLocalPosition(piece.x, piece.y + 1.12, piece.z);
+    parent.addChild(arrow);
+
+    // Flecha compacta orientada al pasillo; al ser geometría 3D queda oculta detrás de los muros.
+    addBox(arrow, 'Vástago', [0, -0.09, 0], [0.035, 0.2, 0.035], accent);
+    const left = addBox(arrow, 'Punta izquierda', [-0.052, -0.24, 0], [0.035, 0.13, 0.035], accent);
+    left.setLocalEulerAngles(0, 0, 40);
+    const right = addBox(arrow, 'Punta derecha', [0.052, -0.24, 0], [0.035, 0.13, 0.035], accent);
+    right.setLocalEulerAngles(0, 0, -40);
+    return arrow;
 }
 
 function addBook(parent: Entity, x: number, z: number, materials: MaterialSet): Entity {
@@ -187,6 +220,8 @@ export function buildRoom(app: AppBase): Map<Piece, Entity> {
     addWall(room, 'Muro interior horizontal', 0, 4, 12, 0.16, materials);
     addWall(room, 'Muro interior vertical', 6, 7, 0.16, 6, materials);
 
+    addWayfindingMap(app, room, materials);
+
     // Muro sur con dos umbrales diferenciados para entrada y salida.
     addWall(room, 'Muro sur · segmento oeste', 6.68, 10, 1.36, 0.16, materials);
     addWall(room, 'Muro sur · separación de puertas', 9.28, 10, 0.96, 0.16, materials);
@@ -214,6 +249,19 @@ export function buildRoom(app: AppBase): Map<Piece, Entity> {
         [gon, addFigure(room, 'Pieza: Funko Gon', gon.x, gon.z, materials.green, materials.teal, materials)],
         [miku, addPlush(room, miku.x, miku.z, materials)]
     ]);
+
+    const arrowMaterial = material('#159b95', '#159b95');
+    const arrows = pieces.map((piece) => addInteractionArrow(room, piece, arrowMaterial));
+    let elapsed = 0;
+    const animateArrows = (dt: number): void => {
+        elapsed += dt;
+        arrows.forEach((arrow, index) => {
+            const piece = pieces[index];
+            arrow.setLocalPosition(piece.x, piece.y + 1.12 + Math.sin(elapsed * 2.2 + index * 0.42) * 0.075, piece.z);
+        });
+    };
+    app.on('update', animateArrows);
+    app.once('destroy', () => app.off('update', animateArrows));
 
     // Paneles sin contenido curatorial final.
     addBox(room, 'Soporte de bienvenida', [7.15, 0.47, 7.62], [1.3, 0.94, 0.12], materials.white);

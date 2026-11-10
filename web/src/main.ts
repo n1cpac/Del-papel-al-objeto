@@ -20,9 +20,9 @@ import { createVisitorCamera } from './experience/controls';
 import { mountDebug } from './experience/debug';
 import { mountHud } from './experience/hud';
 import { createInspector } from './experience/inspect';
-import { mountMobileFullscreen } from './experience/mobile-fullscreen';
 import { mountPieceFocus } from './experience/piece-focus';
 import { buildRoom } from './experience/room';
+import { mountStartScreen } from './experience/start-screen';
 
 const canvas = document.getElementById('application-canvas');
 if (!(canvas instanceof HTMLCanvasElement)) {
@@ -67,6 +67,6 @@ app.start();
 const pedestals = buildRoom(app);
 const camera = createVisitorCamera(app);
 mountHud(app);
+mountStartScreen(app, camera);
 mountPieceFocus(app, camera, pedestals, createInspector(app, camera));
 mountDebug(app, camera);
-mountMobileFullscreen(canvas);

@@ -12,8 +12,9 @@ export function createVisitorCamera(app: AppBase): Entity {
         farClip: 100
     });
     app.root.addChild(camera);
-    camera.setPosition(8.05, 1.7, 9.15);
-    camera.setLocalEulerAngles(0, -19, 0);
+    // Aparición centrada entre los vanos de entrada y salida, orientada hacia el recorrido.
+    camera.setPosition(9.2875, 1.7, 9.15);
+    camera.setLocalEulerAngles(0, 0, 0);
     camera.addComponent('script');
     camera.script?.create(WalkController);
 

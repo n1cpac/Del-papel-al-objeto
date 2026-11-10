@@ -12,12 +12,8 @@
     </head>
     <body>
         <canvas id="application-canvas" aria-label="Sala 3D de la exposición Del papel al objeto"></canvas>
-        <main id="experience-hud" class="hud" aria-label="Información de navegación">
-            <header class="topbar">
-                <div class="brand">
-                    <img src="/src/assets/logo.png" alt="Del papel al objeto" class="brand-logo" />
-                </div>
-            </header>
+        <main id="experience-hud" class="hud is-intro" aria-label="Información de navegación">
+            <header class="topbar"></header>
             <footer class="control-card">
                 <span class="desktop-help">Moverse: WASD / flechas <i>·</i> Mirar: clic y arrastre del mouse</span>
                 <span class="mobile-help">Moverse: joystick izquierdo <i>·</i> Mirar: arrastrar a la derecha</span>
@@ -29,10 +25,65 @@
                 >
             </footer>
         </main>
-        <div id="piece-label" class="piece-label" hidden>
+        <section id="start-screen" class="start-screen" aria-label="Inicio de la exposición">
+            <header class="start-banner">
+                <div id="start-brand" class="brand intro-brand">
+                    <img src="/src/assets/logo.png" alt="Del papel al objeto" class="brand-logo" />
+                </div>
+            </header>
+            <div class="start-content">
+                <div id="start-menu" class="start-menu">
+                    <p class="start-eyebrow">EXPOSICIÓN VIRTUAL</p>
+                    <h1 class="start-title">Del papel al objeto</h1>
+                    <p class="start-description">
+                        Explora libremente cinco piezas y descubre qué las convierte en una colección.
+                    </p>
+                    <div class="start-actions">
+                        <button id="start-enter" class="start-button start-button-primary" type="button">
+                            Iniciar recorrido
+                        </button>
+                        <button
+                            id="start-options-toggle"
+                            class="start-button start-button-secondary"
+                            type="button"
+                            aria-expanded="false"
+                            aria-controls="start-options"
+                        >
+                            Opciones
+                        </button>
+                    </div>
+                    <section id="start-options" class="start-options" aria-label="Opciones de la experiencia" hidden>
+                        <label class="option-field" for="render-resolution">
+                            <span>Resolución</span>
+                            <select id="render-resolution" name="resolution">
+                                <option value="480">480p · rendimiento</option>
+                                <option value="720">720p · equilibrado</option>
+                                <option value="1080">1080p · alta calidad</option>
+                            </select>
+                        </label>
+                        <label class="option-field" for="music-volume">
+                            <span
+                                >Volumen de música <output id="music-volume-value" for="music-volume">50%</output></span
+                            >
+                            <input id="music-volume" name="volume" type="range" min="0" max="100" step="1" value="50" />
+                            <small>Se aplicará cuando se integre la música.</small>
+                        </label>
+                    </section>
+                </div>
+                <div id="start-loading" class="start-loading" role="status" aria-live="polite" hidden>
+                    <span class="loading-spinner" aria-hidden="true"></span>
+                    <span>Preparando la sala…</span>
+                </div>
+            </div>
+        </section>
+        <div id="welcome-message" class="welcome-message" aria-live="polite" hidden>
+            <p>Bienvenido</p>
+            <span>Puedes ver el orden del recorrido a tu derecha</span>
+        </div>
+        <div id="piece-label" class="piece-label" role="group" aria-label="Objeto interactivo" hidden>
             <span id="piece-label-name" class="piece-label-name"></span>
             <button id="piece-interact" type="button" class="piece-interact">
-                Interactuar <kbd class="desktop-help">E</kbd>
+                Explorar objeto <kbd class="desktop-help">E</kbd>
             </button>
         </div>
         <section id="piece-panel" class="piece-panel" role="dialog" aria-labelledby="piece-panel-title" hidden>
@@ -45,7 +96,6 @@
             <div class="rotate-icon" aria-hidden="true"></div>
             <p class="rotate-title">Gira tu teléfono</p>
             <p>Esta experiencia está pensada para verse en horizontal.</p>
-            <p class="rotate-hint">Toca la pantalla para continuar en horizontal.</p>
         </div>
         <div class="joystick-layer" aria-hidden="true">
             <div id="joystick-base" class="joystick-base" hidden></div>

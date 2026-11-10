@@ -13,7 +13,7 @@ const boxHeight = 0.5;
 const labelSideOffset = 0.42;
 
 /**
- * Muestra el nombre de la pieza y el botón «Interactuar» cuando la pieza está cerca y centrada en la vista.
+ * Muestra una señal contextual con efecto hover cuando una pieza está cerca y centrada en la vista.
  * «Interactuar» (botón, tecla E o Enter) abre la cédula; Esc o el botón de cierre la cierra.
  */
 export function mountPieceFocus(
@@ -38,7 +38,6 @@ export function mountPieceFocus(
     const screen = new Vec3();
     let focused: Piece | null = null;
     let openPiece: Piece | null = null;
-
     const openPanel = (piece: Piece): void => {
         openPiece = piece;
         const rows = piece.fields.map(([key, value]) => `<dt>${key}</dt><dd>${value}</dd>`).join('');
@@ -110,6 +109,7 @@ export function mountPieceFocus(
 
         focused = best;
         if (!best) {
+            label.classList.remove('is-focused');
             label.hidden = true;
             return;
         }
@@ -119,7 +119,8 @@ export function mountPieceFocus(
             .add(anchor.set(best.x, best.y, best.z));
         camera.worldToScreen(side, screen);
         labelName.textContent = best.name;
-        label.style.left = `${Math.min(screen.x, width - label.offsetWidth - 12)}px`;
+        label.classList.add('is-focused');
+        label.style.left = `${Math.max(12, Math.min(screen.x, width - label.offsetWidth - 12))}px`;
         label.style.top = `${screen.y}px`;
         label.hidden = false;
     };

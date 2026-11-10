@@ -22,7 +22,7 @@ export function createInspector(app: AppBase, cameraEntity: Entity): Inspector {
         throw new Error('La inspección necesita la cámara del visitante.');
     }
     const canvas = app.graphicsDevice.canvas;
-    const coarsePointer = window.matchMedia('(pointer: coarse)').matches;
+    const touchCapable = window.matchMedia('(pointer: coarse)').matches || navigator.maxTouchPoints > 0;
 
     // Post-proceso solo activo durante la inspección: el recorrido normal no paga su costo.
     const frame = new CameraFrame(app, camera);
@@ -45,6 +45,8 @@ export function createInspector(app: AppBase, cameraEntity: Entity): Inspector {
     const position = new Vec3();
     const shift = new Vec3();
     const panel = document.querySelector<HTMLElement>('#piece-panel');
+    const brand = document.querySelector<HTMLElement>('.brand');
+    const controlCard = document.querySelector<HTMLElement>('.control-card');
     const turnUp = new Quat();
     const turnSide = new Quat();
     const rotation = new Quat();
@@ -55,16 +57,64 @@ export function createInspector(app: AppBase, cameraEntity: Entity): Inspector {
     let minDistance = 0.5;
     let maxDistance = 2;
     let active = false;
+    let objectRadius = 0;
+    let fitDistance = 1;
+    let layoutKey = '';
+
+    const getLayout = (): {
+        canvasRect: DOMRect;
+        leftFraction: number;
+        topFraction: number;
+        bottomFraction: number;
+        halfWidth: number;
+        halfHeight: number;
+    } => {
+        const canvasRect = canvas.getBoundingClientRect();
+        const panelRect = panel?.hidden ? null : panel?.getBoundingClientRect();
+        const leftEdge = panelRect
+            ? Math.max(canvasRect.left, Math.min(panelRect.left, canvasRect.right))
+            : canvasRect.right;
+        const leftFraction = Math.max(0.1, Math.min(1, (leftEdge - canvasRect.left) / canvasRect.width));
+        let topEdge = canvasRect.top;
+        let bottomEdge = canvasRect.bottom;
+        if (brand && getComputedStyle(brand).visibility !== 'hidden') {
+            topEdge = Math.max(topEdge, brand.getBoundingClientRect().bottom + 16);
+        }
+        if (controlCard && getComputedStyle(controlCard).display !== 'none') {
+            bottomEdge = Math.min(bottomEdge, controlCard.getBoundingClientRect().top - 16);
+        }
+        const topFraction = Math.max(0, (topEdge - canvasRect.top) / canvasRect.height);
+        const bottomFraction = Math.min(1, (bottomEdge - canvasRect.top) / canvasRect.height);
+        const verticalTangent = Math.tan((camera.fov * Math.PI) / 360);
+        const aspect = canvasRect.width / canvasRect.height;
+        const horizontalTangent = verticalTangent * aspect;
+        const halfWidth = distance * horizontalTangent;
+        const halfHeight = distance * verticalTangent;
+        return { canvasRect, leftFraction, topFraction, bottomFraction, halfWidth, halfHeight };
+    };
+
+    const layoutSignature = (): string => {
+        const { canvasRect, leftFraction, topFraction, bottomFraction } = getLayout();
+        return `${canvasRect.width}:${canvasRect.height}:${leftFraction.toFixed(3)}:${topFraction.toFixed(3)}:${bottomFraction.toFixed(3)}`;
+    };
+
+    const calculateFitDistance = (radius: number): number => {
+        const { leftFraction, topFraction, bottomFraction } = getLayout();
+        const verticalTangent = Math.tan((camera.fov * Math.PI) / 360);
+        const aspect = canvas.clientWidth / canvas.clientHeight;
+        const horizontalTangent = verticalTangent * aspect;
+        const availableHeight = Math.max(0.25, bottomFraction - topFraction);
+        return Math.max(radius / (verticalTangent * availableHeight), radius / (horizontalTangent * leftFraction));
+    };
 
     const placeAtCenter = (): void => {
         position.copy(cameraEntity.forward).mulScalar(distance).add(cameraEntity.getPosition());
-        if (coarsePointer && panel) {
-            // Móvil: centra la pieza en el espacio libre a la izquierda de la cédula (fracción p del ancho → NDC -p).
-            const covered = Math.min(panel.getBoundingClientRect().width / canvas.clientWidth, 0.5);
-            const halfWidth =
-                distance * Math.tan((camera.fov * Math.PI) / 360) * (canvas.clientWidth / canvas.clientHeight);
-            position.add(shift.copy(cameraEntity.right).mulScalar(-covered * halfWidth));
-        }
+        // Centra la pieza en el espacio libre entre el borde izquierdo y la cédula, en cualquier pantalla.
+        const { leftFraction, topFraction, bottomFraction, halfWidth, halfHeight } = getLayout();
+        position.add(shift.copy(cameraEntity.right).mulScalar((leftFraction - 1) * halfWidth));
+        const freeCenterY = (topFraction + bottomFraction) / 2;
+        const verticalOffset = (0.5 - freeCenterY) * 2 * halfHeight;
+        position.add(shift.copy(cameraEntity.up).mulScalar(verticalOffset));
         pivot.setPosition(position);
     };
 
@@ -81,6 +131,16 @@ export function createInspector(app: AppBase, cameraEntity: Entity): Inspector {
     // En escritorio se puede seguir caminando: la pieza acompaña a la cámara para mantenerse centrada.
     const onUpdate = (): void => {
         if (active) {
+            const nextLayoutKey = layoutSignature();
+            if (nextLayoutKey !== layoutKey) {
+                const zoomRatio = distance / fitDistance;
+                fitDistance = calculateFitDistance(objectRadius);
+                minDistance = Math.max(objectRadius + camera.nearClip + 0.05, fitDistance * 0.7);
+                maxDistance = fitDistance * 2.4;
+                distance = Math.max(minDistance, Math.min(maxDistance, fitDistance * zoomRatio));
+                layoutKey = nextLayoutKey;
+                setFocus();
+            }
             placeAtCenter();
         }
     };
@@ -101,7 +161,7 @@ export function createInspector(app: AppBase, cameraEntity: Entity): Inspector {
         active = true;
         // Escritorio: solo se bloquea la mirada (el arrastre gira la pieza) y se sale alejándose.
         // Móvil: se pausa todo, porque el joystick se oculta durante la inspección.
-        if (coarsePointer) {
+        if (touchCapable) {
             walk.paused = true;
         } else {
             walk.lookLocked = true;
@@ -128,12 +188,13 @@ export function createInspector(app: AppBase, cameraEntity: Entity): Inspector {
         center.copy(bounds.center);
         model.setLocalPosition(-center.x, -center.y, -center.z);
 
-        const radius = bounds.halfExtents.length();
-        const fit = radius / Math.tan(((camera.fov / 2) * Math.PI) / 180);
-        distance = fit * 1.35;
-        minDistance = Math.max(radius + camera.nearClip + 0.05, fit * 0.7);
-        maxDistance = fit * 2.4;
-        frame.dof.focusRange = radius * 1.4;
+        objectRadius = bounds.halfExtents.length();
+        fitDistance = calculateFitDistance(objectRadius);
+        distance = fitDistance * 1.35;
+        minDistance = Math.max(objectRadius + camera.nearClip + 0.05, fitDistance * 0.7);
+        maxDistance = fitDistance * 2.4;
+        frame.dof.focusRange = objectRadius * 1.4;
+        layoutKey = layoutSignature();
 
         // Muestra el frente de la pieza hacia el visitante.
         const forward = cameraEntity.forward;
@@ -166,6 +227,10 @@ export function createInspector(app: AppBase, cameraEntity: Entity): Inspector {
     const onPointerDown = (event: PointerEvent): void => {
         if (!active) {
             return;
+        }
+        // Refuerza el bloqueo si el navegador móvil reporta el puntero principal como fino.
+        if (event.pointerType === 'touch') {
+            walk.paused = true;
         }
         canvas.setPointerCapture(event.pointerId);
         pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
