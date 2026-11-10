@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="es">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+        <meta
+            name="description"
+            content="Exposición virtual sobre personajes de la cultura popular japonesa y su transformación en objetos coleccionables."
+        />
+        <meta name="theme-color" content="#f5f2eb" />
+        <title>Del papel al objeto · Exposición virtual</title>
+    </head>
+    <body>
+        <canvas id="application-canvas" aria-label="Sala 3D de la exposición Del papel al objeto"></canvas>
+        <main id="experience-hud" class="hud" aria-label="Información de navegación">
+            <header class="topbar">
+                <div class="brand">
+                    <img src="/src/assets/logo.png" alt="Del papel al objeto" class="brand-logo" />
+                </div>
+            </header>
+            <footer class="control-card">
+                <span class="desktop-help">Moverse: WASD / flechas <i>·</i> Mirar: clic y arrastre del mouse</span>
+                <span class="mobile-help">Moverse: joystick izquierdo <i>·</i> Mirar: arrastrar a la derecha</span>
+                <span class="free-roam">Exploración libre</span>
+            </footer>
+        </main>
+        <div class="joystick-layer" aria-hidden="true">
+            <div id="joystick-base" class="joystick-base" hidden></div>
+            <div id="joystick-knob" class="joystick-knob" hidden></div>
+        </div>
+        <script type="module" src="/src/main.ts"></script>
+    </body>
+</html>
