@@ -1,6 +1,8 @@
 import type { AppBase, Entity } from 'playcanvas';
 import { Vec3 } from 'playcanvas';
 
+import type { Music } from './audio';
+import { tracks } from './audio';
 import type { Inspector } from './inspect';
 import type { Piece } from './pieces';
 import { pieces } from './pieces';
@@ -20,7 +22,8 @@ export function mountPieceFocus(
     app: AppBase,
     cameraEntity: Entity,
     pedestals: Map<Piece, Entity>,
-    inspector: Inspector
+    inspector: Inspector,
+    music: Music
 ): void {
     const label = document.querySelector<HTMLElement>('#piece-label');
     const labelName = document.querySelector<HTMLElement>('#piece-label-name');
@@ -40,6 +43,9 @@ export function mountPieceFocus(
     let openPiece: Piece | null = null;
     const openPanel = (piece: Piece): void => {
         openPiece = piece;
+        if (piece.audio) {
+            music.play(piece.audio);
+        }
         const rows = piece.fields.map(([key, value]) => `<dt>${key}</dt><dd>${value}</dd>`).join('');
         panelBody.innerHTML = `
             <p class="piece-station">${piece.station}</p>
@@ -57,6 +63,9 @@ export function mountPieceFocus(
         close.focus();
     };
     const closePanel = (): void => {
+        if (openPiece?.audio) {
+            music.play(tracks.tour);
+        }
         panel.hidden = true;
         openPiece = null;
         inspector.close();

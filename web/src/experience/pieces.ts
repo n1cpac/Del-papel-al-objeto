@@ -10,6 +10,8 @@ export type Piece = {
     fields: [label: string, value: string][];
     description: string;
     detail: string;
+    /** Pista opcional (p. ej. './audio/piezas/manga.mp3') que reemplaza la música del recorrido al inspeccionar. */
+    audio?: string;
 };
 
 export const piecesById = {

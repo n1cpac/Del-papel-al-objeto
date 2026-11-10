@@ -22,6 +22,8 @@ export function createInspector(app: AppBase, cameraEntity: Entity): Inspector {
         throw new Error('La inspección necesita la cámara del visitante.');
     }
     const canvas = app.graphicsDevice.canvas;
+    // Mismo corte que el CSS de móvil (starter.css).
+    const compactLayout = window.matchMedia('(pointer: coarse), (max-width: 650px)');
     const touchCapable = window.matchMedia('(pointer: coarse)').matches || navigator.maxTouchPoints > 0;
 
     // Post-proceso solo activo durante la inspección: el recorrido normal no paga su costo.
@@ -70,18 +72,25 @@ export function createInspector(app: AppBase, cameraEntity: Entity): Inspector {
         halfHeight: number;
     } => {
         const canvasRect = canvas.getBoundingClientRect();
-        const panelRect = panel?.hidden ? null : panel?.getBoundingClientRect();
-        const leftEdge = panelRect
-            ? Math.max(canvasRect.left, Math.min(panelRect.left, canvasRect.right))
-            : canvasRect.right;
+        // Escritorio amplio: la pieza va al centro de la pantalla; solo en móvil o ventanas estrechas se aparta de la cédula.
+        const panelRect = panel?.hidden || !compactLayout.matches ? null : panel?.getBoundingClientRect();
+        // Cédula a lo ancho (abajo, en ventanas verticales estrechas): limita el alto libre en lugar del ancho.
+        const panelBelow = !!panelRect && panelRect.left - canvasRect.left < canvasRect.width * 0.25;
+        const leftEdge =
+            panelRect && !panelBelow
+                ? Math.max(canvasRect.left, Math.min(panelRect.left, canvasRect.right))
+                : canvasRect.right;
         const leftFraction = Math.max(0.1, Math.min(1, (leftEdge - canvasRect.left) / canvasRect.width));
         let topEdge = canvasRect.top;
         let bottomEdge = canvasRect.bottom;
-        if (brand && getComputedStyle(brand).visibility !== 'hidden') {
+        if (compactLayout.matches && brand && getComputedStyle(brand).visibility !== 'hidden') {
             topEdge = Math.max(topEdge, brand.getBoundingClientRect().bottom + 16);
         }
-        if (controlCard && getComputedStyle(controlCard).display !== 'none') {
+        if (compactLayout.matches && controlCard && getComputedStyle(controlCard).display !== 'none') {
             bottomEdge = Math.min(bottomEdge, controlCard.getBoundingClientRect().top - 16);
+        }
+        if (panelRect && panelBelow) {
+            bottomEdge = Math.min(bottomEdge, panelRect.top - 16);
         }
         const topFraction = Math.max(0, (topEdge - canvasRect.top) / canvasRect.height);
         const bottomFraction = Math.min(1, (bottomEdge - canvasRect.top) / canvasRect.height);

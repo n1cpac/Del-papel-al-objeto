@@ -1,6 +1,8 @@
 import type { AppBase, Entity } from 'playcanvas';
 import { RESOLUTION_FIXED } from 'playcanvas';
 
+import type { Music } from './audio';
+import { tracks } from './audio';
 import { WalkController } from './walk-controller';
 
 const resolutionKey = 'del-papel-resolution';
@@ -33,7 +35,7 @@ function saveSetting(key: string, value: string): void {
 }
 
 /** Menú inicial, ajustes de calidad y secuencia de bienvenida. */
-export function mountStartScreen(app: AppBase, camera: Entity): void {
+export function mountStartScreen(app: AppBase, camera: Entity, music: Music): void {
     const screen = required<HTMLElement>('#start-screen');
     const hud = required<HTMLElement>('#experience-hud');
     const banner = required<HTMLElement>('#start-brand');
@@ -53,6 +55,11 @@ export function mountStartScreen(app: AppBase, camera: Entity): void {
     }
 
     walk.paused = true;
+
+    // Muestra la página cuando el logo ya está decodificado; si falla la imagen, se muestra igual.
+    Promise.resolve(banner.querySelector('img')?.decode())
+        .catch(() => undefined)
+        .then(() => document.body.classList.add('is-ready'));
 
     const savedResolution = readSetting(resolutionKey);
     resolution.value = savedResolution && ['480', '720', '1080'].includes(savedResolution) ? savedResolution : '720';
@@ -76,6 +83,7 @@ export function mountStartScreen(app: AppBase, camera: Entity): void {
     }
     const updateVolume = (): void => {
         volumeValue.textContent = `${volume.value}%`;
+        music.setVolume(Number(volume.value) / 100);
         saveSetting(volumeKey, volume.value);
     };
     volume.addEventListener('input', updateVolume);
@@ -92,6 +100,7 @@ export function mountStartScreen(app: AppBase, camera: Entity): void {
     const onStart = async (): Promise<void> => {
         if (started) return;
         started = true;
+        music.play(tracks.tour);
         enter.disabled = true;
         optionsToggle.disabled = true;
         const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -134,6 +143,8 @@ export function mountStartScreen(app: AppBase, camera: Entity): void {
         welcome.classList.remove('is-leaving');
     };
     enter.addEventListener('click', onStart);
+    // Suena desde el primer gesto en el menú (el navegador no permite audio antes).
+    music.play(tracks.menu);
 
     app.on('destroy', () => {
         window.removeEventListener('resize', applyResolution);

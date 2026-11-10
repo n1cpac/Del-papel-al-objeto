@@ -16,10 +16,12 @@ import {
 } from 'playcanvas';
 
 import './starter.css';
+import { createMusic } from './experience/audio';
 import { createVisitorCamera } from './experience/controls';
 import { mountDebug } from './experience/debug';
 import { mountHud } from './experience/hud';
 import { createInspector } from './experience/inspect';
+import { mountMobileFullscreen } from './experience/mobile-fullscreen';
 import { mountPieceFocus } from './experience/piece-focus';
 import { buildRoom } from './experience/room';
 import { mountStartScreen } from './experience/start-screen';
@@ -67,6 +69,8 @@ app.start();
 const pedestals = buildRoom(app);
 const camera = createVisitorCamera(app);
 mountHud(app);
-mountStartScreen(app, camera);
-mountPieceFocus(app, camera, pedestals, createInspector(app, camera));
+const music = createMusic(app);
+mountStartScreen(app, camera, music);
+mountPieceFocus(app, camera, pedestals, createInspector(app, camera), music);
 mountDebug(app, camera);
+mountMobileFullscreen(canvas);

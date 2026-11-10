@@ -728,6 +728,67 @@ body.inspecting .inspect-help {
     display: none !important;
 }
 
+/* Pantallas grandes: textos y cédula crecen para no verse diminutos. */
+@media (min-width: 1800px) and (min-height: 950px) {
+    .start-content {
+        width: min(760px, 100%);
+    }
+
+    .start-eyebrow {
+        font-size: 13px;
+    }
+
+    .start-description {
+        max-width: 560px;
+    }
+
+    .start-button {
+        min-height: 54px;
+        font-size: 17px;
+    }
+
+    .control-card {
+        padding: 13px 18px;
+        font-size: 14px;
+    }
+
+    .piece-label {
+        max-width: 280px;
+    }
+
+    .piece-label-name {
+        font-size: 16px;
+    }
+
+    .piece-interact {
+        font-size: 15px;
+    }
+
+    .piece-panel {
+        width: min(460px, 30vw);
+        font-size: 16px;
+    }
+
+    .piece-panel h2 {
+        font-size: 24px;
+    }
+
+    .piece-panel dl {
+        font-size: 15px;
+    }
+}
+
+/* Las ayudas dependen del tipo de control, no del ancho: una ventana estrecha de escritorio sigue usando teclado. */
+@media (pointer: coarse) {
+    .desktop-help {
+        display: none;
+    }
+
+    .mobile-help {
+        display: inline;
+    }
+}
+
 @media (pointer: coarse), (max-width: 650px) {
     .start-banner {
         flex-basis: max(160px, min(46vh, 76vw));
@@ -789,14 +850,6 @@ body.inspecting .inspect-help {
         font-size: 11px;
     }
 
-    .desktop-help {
-        display: none;
-    }
-
-    .mobile-help {
-        display: inline;
-    }
-
     .free-roam {
         display: none;
     }
@@ -844,6 +897,70 @@ body.inspecting .inspect-help {
     }
 }
 
+/* Ventana estrecha en vertical (p. ej. escritorio angosto o tableta): la cédula pasa abajo y la pieza queda arriba. */
+@media (max-width: 650px) and (orientation: portrait) {
+    .piece-panel {
+        top: auto;
+        bottom: max(12px, env(safe-area-inset-bottom));
+        left: max(12px, env(safe-area-inset-left));
+        width: auto;
+        max-height: 45dvh;
+        transform: none;
+    }
+}
+
+/* Pantallas bajas en horizontal (teléfonos): logo y menú lado a lado para que todo quepa sin desplazarse. */
+@media (orientation: landscape) and (max-height: 520px) {
+    .start-screen {
+        flex-direction: row;
+        overflow: hidden;
+    }
+
+    .start-banner {
+        flex: 0 0 44%;
+        box-shadow: 5px 0 20px rgb(39 50 48 / 8%);
+    }
+
+    .start-content {
+        justify-content: safe center;
+        max-height: 100%;
+        overflow-y: auto;
+        padding: max(14px, env(safe-area-inset-top)) max(22px, env(safe-area-inset-right))
+            max(14px, env(safe-area-inset-bottom)) 22px;
+    }
+
+    .start-eyebrow {
+        margin-bottom: 6px;
+    }
+
+    .start-title {
+        margin-bottom: 8px;
+        font-size: clamp(22px, 7vh, 30px);
+    }
+
+    .start-description {
+        margin-bottom: 14px;
+        font-size: 14px;
+    }
+
+    .start-actions {
+        flex-direction: row;
+        width: 100%;
+        gap: 10px;
+    }
+
+    .start-button {
+        flex: 1;
+        min-height: 44px;
+        padding: 10px 14px;
+    }
+
+    .start-options {
+        margin-top: 12px;
+        padding: 12px 14px;
+    }
+}
+
 /* Aviso de orientación: solo en pantallas táctiles en vertical. */
 .rotate-overlay {
     position: fixed;
@@ -859,6 +976,12 @@ body.inspecting .inspect-help {
     color: #263a40;
     font-size: 15px;
     text-align: center;
+}
+
+.rotate-hint {
+    margin-top: 10px !important;
+    color: #167d77;
+    font-weight: 650;
 }
 
 .rotate-overlay p {

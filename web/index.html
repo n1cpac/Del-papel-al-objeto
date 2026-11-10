@@ -9,6 +9,15 @@
         />
         <meta name="theme-color" content="#f5f2eb" />
         <title>Del papel al objeto · Exposición virtual</title>
+        <!-- Oculta la página hasta que estilos y logo estén listos (start-screen.ts añade .is-ready): evita el destello de HTML sin estilo. -->
+        <style>
+            html {
+                background: #fff8ef;
+            }
+            body:not(.is-ready) {
+                visibility: hidden;
+            }
+        </style>
     </head>
     <body>
         <canvas id="application-canvas" aria-label="Sala 3D de la exposición Del papel al objeto"></canvas>
@@ -66,7 +75,6 @@
                                 >Volumen de música <output id="music-volume-value" for="music-volume">50%</output></span
                             >
                             <input id="music-volume" name="volume" type="range" min="0" max="100" step="1" value="50" />
-                            <small>Se aplicará cuando se integre la música.</small>
                         </label>
                     </section>
                 </div>
@@ -96,6 +104,7 @@
             <div class="rotate-icon" aria-hidden="true"></div>
             <p class="rotate-title">Gira tu teléfono</p>
             <p>Esta experiencia está pensada para verse en horizontal.</p>
+            <p class="rotate-hint">Toca la pantalla para continuar en horizontal.</p>
         </div>
         <div class="joystick-layer" aria-hidden="true">
             <div id="joystick-base" class="joystick-base" hidden></div>
