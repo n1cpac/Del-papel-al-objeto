@@ -12,8 +12,8 @@ export function createVisitorCamera(app: AppBase): Entity {
         farClip: 100
     });
     app.root.addChild(camera);
-    // Aparición centrada entre los vanos de entrada y salida, orientada hacia el recorrido.
-    camera.setPosition(9.2875, 1.7, 9.15);
+    // Aparición en el eje del brazo de entrada (x = 9): sobre la guía del suelo y frente al centro de la puerta.
+    camera.setPosition(9, 1.7, 9.15);
     camera.setLocalEulerAngles(0, 0, 0);
     camera.addComponent('script');
     camera.script?.create(WalkController);

@@ -12,9 +12,37 @@ export type Piece = {
     detail: string;
     /** Canción que suena al inspeccionar la pieza (la del recorrido se pausa); `gain` la atenúa (0…1). */
     audio?: { src: string; gain?: number };
+    /**
+     * Pieza colgada en un muro que mira al sur: solo se enfoca desde delante (z mayor que la suya),
+     * no añade zona de exclusión (el muro ya bloquea) y en la inspección solo se acerca o aleja, sin girar.
+     */
+    onWall?: boolean;
 };
 
 export const piecesById = {
+    intro: {
+        station: 'A · Introducción',
+        name: 'Introducción a la colección',
+        x: 7.05,
+        z: 4.3,
+        y: 1.65,
+        onWall: true,
+        // Textos del guion curatorial (Lugar A) y de la ficha de colección (Momentos 1 y 4).
+        fields: [
+            ['Exposición', 'Del papel al objeto: la occidentalización de la cultura japonesa'],
+            ['Modalidad', 'Exposición temporal virtual'],
+            ['Institución', 'Universidad Militar Nueva Granada'],
+            ['Objetos', 'Cartas TCG, figuras de vinilo Funko Pop y peluche'],
+            ['Pieza ancla', 'Funko Pop Yuji Itadori #1111'],
+            [
+                'Pregunta guía',
+                '¿Cómo adapta y comercializa el mercado occidental las narrativas y personajes de la cultura popular japonesa?'
+            ]
+        ],
+        description:
+            'Cinco objetos cuentan cómo la cultura popular japonesa viajó a Occidente y se volvió coleccionable. Descubrirás cómo un personaje que nace en tinta y papel termina como carta, figura de vinilo o peluche. Puedes recorrer la sala en cualquier orden.',
+        detail: 'Los personajes japoneses no llegan a Occidente solo como historias, sino como productos reinterpretados; un grupo de objetos se vuelve colección cuando un criterio los relaciona.'
+    },
     manga: {
         audio: { src: './audio/piezas/manga.mp3', gain: 0.45 },
         station: 'B · El papel, el origen',

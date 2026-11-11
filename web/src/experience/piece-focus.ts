@@ -43,8 +43,10 @@ export function mountPieceFocus(
     let openPiece: Piece | null = null;
     const openPanel = (piece: Piece): void => {
         openPiece = piece;
-        // La música del recorrido se pausa (y recuerda su posición) mientras suena la canción de la pieza.
-        music.play(piece.audio?.src ?? null, 'piece', piece.audio?.gain);
+        // La música del recorrido se pausa (y recuerda su posición) mientras suena la canción de la pieza; sin canción, sigue.
+        if (piece.audio) {
+            music.play(piece.audio.src, 'piece', piece.audio.gain);
+        }
         const rows = piece.fields.map(([key, value]) => `<dt>${key}</dt><dd>${value}</dd>`).join('');
         panelBody.innerHTML = `
             <p class="piece-station">${piece.station}</p>
@@ -57,7 +59,7 @@ export function mountPieceFocus(
         label.hidden = true;
         const pedestal = pedestals.get(piece);
         if (pedestal) {
-            inspector.open(pedestal);
+            inspector.open(pedestal, !piece.onWall);
         }
         close.focus();
     };
@@ -100,6 +102,10 @@ export function mountPieceFocus(
         let best: Piece | null = null;
         let bestOffset = Infinity;
         for (const piece of pieces) {
+            // Las piezas de muro solo se enfocan desde su cara, no a través del muro.
+            if (piece.onWall && eye.z < piece.z) {
+                continue;
+            }
             anchor.set(piece.x, piece.y, piece.z);
             const distance = Math.hypot(anchor.x - eye.x, anchor.z - eye.z);
             // Descarta piezas lejanas o detrás de la cámara (worldToScreen proyecta también las de atrás).

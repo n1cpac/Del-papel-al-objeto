@@ -200,7 +200,10 @@ function addDoorVideo(app: AppBase, parent: Entity): void {
 }
 
 /** Imagen de introducción a la colección, enmarcada en el tramo oeste del muro de paso (a la izquierda de la puerta al llegar). */
-function addIntroImage(app: AppBase, parent: Entity, materials: MaterialSet): void {
+function addIntroImage(app: AppBase, room: Entity, materials: MaterialSet): Entity {
+    // Grupo propio: la inspección copia el marco y la imagen como una sola pieza.
+    const parent = new Entity('Panel · introducción a la colección');
+    room.addChild(parent);
     // Imagen 2:3; el muro mira al sur (z = 4,08), hacia el visitante que llega desde la entrada.
     addBox(parent, 'Marco · introducción a la colección', [7.05, 1.65, 4.1], [1.12, 1.62, 0.04], materials.trim);
     const surface = new StandardMaterial();
@@ -219,6 +222,7 @@ function addIntroImage(app: AppBase, parent: Entity, materials: MaterialSet): vo
     });
     image.addEventListener('error', () => console.warn('No se pudo cargar la imagen de introducción.'));
     image.src = `${import.meta.env.BASE_URL}images/intro-coleccion.jpg`;
+    return parent;
 }
 
 function addPedestal(
@@ -324,7 +328,6 @@ export function buildRoom(app: AppBase): Map<Piece, Entity> {
 
     addWayfindingMap(app, room, materials);
     addDoorVideo(app, room);
-    addIntroImage(app, room, materials);
 
     // Muro sur con dos umbrales diferenciados para entrada y salida.
     addWall(room, 'Muro sur · segmento oeste', 6.68, 10, 1.36, 0.16, materials);
@@ -334,19 +337,18 @@ export function buildRoom(app: AppBase): Map<Piece, Entity> {
     addBox(room, 'Umbral · salida', [10.525, 0.015, 10], [1.45, 0.03, 0.42], materials.stations.E);
 
     // Guía central del recorrido; las piezas quedan cerca del muro norte.
-    addBox(room, 'Guía de recorrido · pasillo vertical', [8.9, 0.012, 6.2], [0.08, 0.025, 7.6], materials.stations.A);
-    addBox(room, 'Guía de recorrido · brazo horizontal', [2.2, 0.012, 2.4], [13.4, 0.025, 0.08], materials.stations.C);
+    addBox(room, 'Guía de recorrido · pasillo vertical', [9, 0.012, 6.2], [0.08, 0.025, 7.6], materials.stations.A);
+    addBox(room, 'Guía de recorrido · brazo horizontal', [2.25, 0.012, 2.4], [13.5, 0.025, 0.08], materials.stations.C);
 
     // Paneles y pedestales se pegan al perímetro para liberar el espacio central.
-    const { manga, deck, yuji, gon, miku } = piecesById;
-    addSign(room, 'A', 7.15, 8.05, materials.stations.A, materials);
+    const { intro, manga, deck, yuji, gon, miku } = piecesById;
     addSign(room, 'B', manga.x, signZ, materials.stations.B, materials);
     addSign(room, 'C', yuji.x, signZ, materials.stations.C, materials);
     addSign(room, 'D', miku.x, signZ, materials.stations.D, materials);
-    addSign(room, 'E', closure.x, signZ, materials.stations.E, materials);
 
     // Piezas del brazo horizontal, orientadas hacia el corredor central.
     const pedestals = new Map<Piece, Entity>([
+        [intro, addIntroImage(app, room, materials)],
         [manga, addBook(room, manga.x, manga.z, materials)],
         [deck, addDeck(room, deck.x, deck.z, materials)],
         [yuji, addFigure(room, 'Pieza: Funko Yuji', yuji.x, yuji.z, materials.red, materials.dark, materials)],
@@ -367,17 +369,10 @@ export function buildRoom(app: AppBase): Map<Piece, Entity> {
     app.on('update', animateArrows);
     app.once('destroy', () => app.off('update', animateArrows));
 
-    // Paneles sin contenido curatorial final.
-    addBox(room, 'Soporte de bienvenida', [7.15, 0.47, 7.62], [1.3, 0.94, 0.12], materials.white);
-    addBox(room, 'Acento de bienvenida', [7.15, 0.94, 7.54], [1.3, 0.08, 0.04], materials.stations.A);
-    addBox(room, 'Soporte de cierre', [closure.x, 0.47, closure.z], [1.4, 0.94, 0.12], materials.white);
-    addBox(room, 'Acento de cierre', [closure.x, 0.94, closure.z - 0.08], [1.4, 0.08, 0.04], materials.stations.E);
-
     return pedestals;
 }
 
 const signZ = -1.58;
-const closure = { x: -3.6, z: -0.5 };
 // Muro que divide el brazo de entrada de la sala (z = 4, de pared a pared: x 6…12); entre ambos tramos queda un hueco de 1,8 m centrado en x = 9.
 const passageWalls = [
     { x: 7.05, z: 4, halfX: 1.05, halfZ: 0.08 },
@@ -393,9 +388,7 @@ export function isInsideGallery(position: Vec3): boolean {
 }
 
 const displayKeepOuts = [
-    ...pieces.map(({ x, z }) => ({ x, z, halfX: 0.72, halfZ: 0.64 })),
-    { ...closure, halfX: 0.88, halfZ: 0.62 },
-    { x: 7.15, z: 7.83, halfX: 0.82, halfZ: 0.74 },
+    ...pieces.filter((piece) => !piece.onWall).map(({ x, z }) => ({ x, z, halfX: 0.72, halfZ: 0.64 })),
     ...passageWalls
 ];
 

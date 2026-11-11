@@ -1,5 +1,5 @@
-import type { AppBase, RenderComponent } from 'playcanvas';
-import { BoundingBox, CameraFrame, Entity, Quat, Vec3 } from 'playcanvas';
+import type { AppBase, LightComponent, RenderComponent } from 'playcanvas';
+import { BoundingBox, CameraFrame, Entity, Layer, Quat, Vec3 } from 'playcanvas';
 
 import { WalkController } from './walk-controller';
 
@@ -7,7 +7,8 @@ const degreesPerPixel = 0.4;
 const keyZoomFactor = 1.12;
 
 export type Inspector = {
-    open(pedestal: Entity): void;
+    /** `rotatable` en falso deja la pieza fija: solo se acerca o aleja. */
+    open(pedestal: Entity, rotatable?: boolean): void;
     close(): void;
 };
 
@@ -36,8 +37,34 @@ export function createInspector(app: AppBase, cameraEntity: Entity): Inspector {
     frame.vignette.intensity = 0.55;
     frame.vignette.inner = 0.35;
     frame.vignette.outer = 1.1;
+    // La pieza no está en la imagen principal (ver capa de inspección): se desenfoca toda la sala, cerca o lejos.
+    frame.dof.focusDistance = 0;
+    frame.dof.focusRange = 0.6;
     frame.update();
     frame.enabled = false;
+
+    // La pieza inspeccionada se dibuja en su propia capa con una segunda cámara, después de la escena y con la
+    // profundidad limpia: ningún muro puede taparla y queda nítida sobre el fondo desenfocado.
+    const inspectLayer = new Layer({ name: 'Inspección' });
+    app.scene.layers.push(inspectLayer);
+    for (const light of app.root.findComponents('light') as LightComponent[]) {
+        light.layers = [...light.layers, inspectLayer.id];
+    }
+    const overlay = new Entity('Cámara de inspección');
+    overlay.addComponent('camera', {
+        layers: [inspectLayer.id],
+        clearColorBuffer: false,
+        clearDepthBuffer: true,
+        priority: camera.priority + 1,
+        fov: camera.fov,
+        nearClip: camera.nearClip,
+        farClip: camera.farClip,
+        toneMapping: camera.toneMapping,
+        gammaCorrection: camera.gammaCorrection
+    });
+    overlay.enabled = false;
+    // Hija de la cámara del visitante: comparte posición, giro y balanceo al caminar.
+    cameraEntity.addChild(overlay);
 
     const pivot = new Entity('Inspección');
     pivot.enabled = false;
@@ -123,14 +150,8 @@ export function createInspector(app: AppBase, cameraEntity: Entity): Inspector {
         pivot.setPosition(position);
     };
 
-    const setFocus = (): void => {
-        frame.dof.focusDistance = distance;
-        frame.update();
-    };
-
     const zoom = (factor: number): void => {
         distance = Math.min(maxDistance, Math.max(minDistance, distance * factor));
-        setFocus();
     };
 
     // En escritorio se puede seguir caminando: la pieza acompaña a la cámara para mantenerse centrada.
@@ -144,7 +165,6 @@ export function createInspector(app: AppBase, cameraEntity: Entity): Inspector {
                 maxDistance = fitDistance * 2.4;
                 distance = Math.max(minDistance, Math.min(maxDistance, fitDistance * zoomRatio));
                 layoutKey = nextLayoutKey;
-                setFocus();
             }
             placeAtCenter();
         }
@@ -159,11 +179,13 @@ export function createInspector(app: AppBase, cameraEntity: Entity): Inspector {
         pivot.setRotation(turnUp.mul(turnSide).mul(rotation));
     };
 
-    const open = (pedestal: Entity): void => {
+    let rotatable = true;
+    const open = (pedestal: Entity, canRotate = true): void => {
         if (active) {
             return;
         }
         active = true;
+        rotatable = canRotate;
         // Escritorio: solo se bloquea la mirada (el arrastre gira la pieza) y se sale alejándose.
         // Móvil: se pausa todo, porque el joystick se oculta durante la inspección.
         if (touchCapable) {
@@ -172,6 +194,7 @@ export function createInspector(app: AppBase, cameraEntity: Entity): Inspector {
             walk.lookLocked = true;
         }
         document.body.classList.add('inspecting');
+        document.body.classList.toggle('inspect-fixed', !rotatable);
 
         // La pieza es todo lo que no es base del pedestal; se copia y el original se oculta («se toma» del pedestal).
         hiddenParts = pedestal.children.filter(
@@ -184,6 +207,9 @@ export function createInspector(app: AppBase, cameraEntity: Entity): Inspector {
         for (const part of hiddenParts) {
             model.addChild(part.clone());
             part.enabled = false;
+        }
+        for (const render of model.findComponents('render') as RenderComponent[]) {
+            render.layers = [inspectLayer.id];
         }
         pivot.enabled = true;
 
@@ -198,14 +224,13 @@ export function createInspector(app: AppBase, cameraEntity: Entity): Inspector {
         distance = fitDistance * 1.35;
         minDistance = Math.max(objectRadius + camera.nearClip + 0.05, fitDistance * 0.7);
         maxDistance = fitDistance * 2.4;
-        frame.dof.focusRange = objectRadius * 1.4;
         layoutKey = layoutSignature();
 
         // Muestra el frente de la pieza hacia el visitante.
         const forward = cameraEntity.forward;
         pivot.setEulerAngles(0, (Math.atan2(-forward.x, -forward.z) * 180) / Math.PI, 0);
         frame.enabled = true;
-        setFocus();
+        overlay.enabled = true;
         placeAtCenter();
     };
 
@@ -215,6 +240,7 @@ export function createInspector(app: AppBase, cameraEntity: Entity): Inspector {
         }
         active = false;
         frame.enabled = false;
+        overlay.enabled = false;
         pivot.enabled = false;
         model?.destroy();
         model = null;
@@ -223,7 +249,7 @@ export function createInspector(app: AppBase, cameraEntity: Entity): Inspector {
         pointers.clear();
         walk.paused = false;
         walk.lookLocked = false;
-        document.body.classList.remove('inspecting');
+        document.body.classList.remove('inspecting', 'inspect-fixed');
     };
 
     // Entrada propia de la inspección: arrastre con un puntero gira, dos punteros (pellizco) acercan.
@@ -246,7 +272,7 @@ export function createInspector(app: AppBase, cameraEntity: Entity): Inspector {
         if (!active || !previous) {
             return;
         }
-        if (pointers.size === 1) {
+        if (pointers.size === 1 && rotatable) {
             rotate((event.clientX - previous.x) * degreesPerPixel, (event.clientY - previous.y) * degreesPerPixel);
         }
         pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
