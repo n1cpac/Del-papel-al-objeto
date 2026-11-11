@@ -1,5 +1,13 @@
 import type { AppBase, Vec3 } from 'playcanvas';
-import { Color, Entity, StandardMaterial } from 'playcanvas';
+import {
+    ADDRESS_CLAMP_TO_EDGE,
+    Color,
+    Entity,
+    FILTER_LINEAR,
+    PIXELFORMAT_SRGBA8,
+    StandardMaterial,
+    Texture
+} from 'playcanvas';
 
 import type { Piece } from './pieces';
 import { pieces, piecesById } from './pieces';
@@ -113,7 +121,13 @@ function addSign(
 
 function addWayfindingMap(app: AppBase, parent: Entity, materials: MaterialSet): void {
     // Marco mural al comienzo del pasillo de entrada, mirando hacia el recorrido.
-    const frame = addBox(parent, 'Marco · plano del recorrido', [11.82, 1.72, 8.45], [2.02, 1.25, 0.12], materials.trim);
+    const frame = addBox(
+        parent,
+        'Marco · plano del recorrido',
+        [11.82, 1.72, 8.45],
+        [2.02, 1.25, 0.12],
+        materials.trim
+    );
     frame.setLocalEulerAngles(0, -90, 0);
     const mapMaterial = material('#fffdf8');
     const map = addBox(parent, 'Plano del recorrido · orientación', [11.74, 1.72, 8.45], [1.78, 1, 0.035], mapMaterial);
@@ -128,6 +142,83 @@ function addWayfindingMap(app: AppBase, parent: Entity, materials: MaterialSet):
         mapMaterial.emissive = new Color(0.16, 0.16, 0.16);
         mapMaterial.update();
     });
+}
+
+/** Textura sRGB (colores fieles) para una imagen o un video cargado a mano. */
+function mediaTexture(app: AppBase, name: string, mipmaps: boolean): Texture {
+    return new Texture(app.graphicsDevice, {
+        name,
+        format: PIXELFORMAT_SRGBA8,
+        mipmaps,
+        minFilter: FILTER_LINEAR,
+        magFilter: FILTER_LINEAR,
+        addressU: ADDRESS_CLAMP_TO_EDGE,
+        addressV: ADDRESS_CLAMP_TO_EDGE
+    });
+}
+
+/** Video vertical (9:16) que llena el hueco del muro de paso. No tiene colisión: se atraviesa. */
+function addDoorVideo(app: AppBase, parent: Entity): void {
+    const video = document.createElement('video');
+    video.src = `${import.meta.env.BASE_URL}videos/puerta-carta-yugi.mp4`;
+    video.loop = true;
+    // Los navegadores solo reproducen solos los videos silenciados; inline evita el reproductor a pantalla completa en iPhone.
+    video.muted = true;
+    video.playsInline = true;
+    video.crossOrigin = 'anonymous';
+
+    const texture = mediaTexture(app, 'Video · puerta', false);
+    const surface = new StandardMaterial();
+    surface.diffuse = new Color(0, 0, 0);
+    surface.emissive = new Color(1, 1, 1);
+    surface.emissiveMap = texture;
+    // Sin iluminación: el video se ve con su brillo propio, igual desde ambos lados.
+    surface.useLighting = false;
+    surface.update();
+    // Caja delgada: muestra el video legible por las dos caras.
+    addBox(parent, 'Puerta · video Carta de Yugi', [9, 1.65, 4], [1.8, 3.3, 0.02], surface);
+
+    video.addEventListener(
+        'canplay',
+        () => {
+            texture.setSource(video);
+            video.play().catch(() => undefined);
+        },
+        { once: true }
+    );
+    // Sube cada fotograma nuevo del video a la GPU.
+    const onUpdate = (): void => {
+        if (!video.paused) {
+            texture.upload();
+        }
+    };
+    app.on('update', onUpdate);
+    app.on('destroy', () => {
+        app.off('update', onUpdate);
+        video.pause();
+    });
+}
+
+/** Imagen de introducción a la colección, enmarcada en el tramo oeste del muro de paso (a la izquierda de la puerta al llegar). */
+function addIntroImage(app: AppBase, parent: Entity, materials: MaterialSet): void {
+    // Imagen 2:3; el muro mira al sur (z = 4,08), hacia el visitante que llega desde la entrada.
+    addBox(parent, 'Marco · introducción a la colección', [7.05, 1.65, 4.1], [1.12, 1.62, 0.04], materials.trim);
+    const surface = new StandardMaterial();
+    surface.diffuse = new Color(1, 1, 1);
+    surface.emissive = new Color(0.16, 0.16, 0.16);
+    surface.gloss = 0.18;
+    surface.update();
+    addBox(parent, 'Imagen · introducción a la colección', [7.05, 1.65, 4.125], [1, 1.5, 0.02], surface);
+
+    const texture = mediaTexture(app, 'Imagen · introducción', true);
+    const image = new Image();
+    image.addEventListener('load', () => {
+        texture.setSource(image);
+        surface.diffuseMap = texture;
+        surface.update();
+    });
+    image.addEventListener('error', () => console.warn('No se pudo cargar la imagen de introducción.'));
+    image.src = `${import.meta.env.BASE_URL}images/intro-coleccion.jpg`;
 }
 
 function addPedestal(
@@ -219,8 +310,21 @@ export function buildRoom(app: AppBase): Map<Piece, Entity> {
     addWall(room, 'Muro oeste', -6, 1, 0.16, 6, materials);
     addWall(room, 'Muro interior horizontal', 0, 4, 12, 0.16, materials);
     addWall(room, 'Muro interior vertical', 6, 7, 0.16, 6, materials);
+    passageWalls.forEach(({ x, z, halfX, halfZ }, index) =>
+        addWall(
+            room,
+            `Muro de paso · segmento ${index === 0 ? 'oeste' : 'este'}`,
+            x,
+            z,
+            halfX * 2,
+            halfZ * 2,
+            materials
+        )
+    );
 
     addWayfindingMap(app, room, materials);
+    addDoorVideo(app, room);
+    addIntroImage(app, room, materials);
 
     // Muro sur con dos umbrales diferenciados para entrada y salida.
     addWall(room, 'Muro sur · segmento oeste', 6.68, 10, 1.36, 0.16, materials);
@@ -274,6 +378,11 @@ export function buildRoom(app: AppBase): Map<Piece, Entity> {
 
 const signZ = -1.58;
 const closure = { x: -3.6, z: -0.5 };
+// Muro que divide el brazo de entrada de la sala (z = 4, de pared a pared: x 6…12); entre ambos tramos queda un hueco de 1,8 m centrado en x = 9.
+const passageWalls = [
+    { x: 7.05, z: 4, halfX: 1.05, halfZ: 0.08 },
+    { x: 10.95, z: 4, halfX: 1.05, halfZ: 0.08 }
+];
 
 export function isInsideGallery(position: Vec3): boolean {
     const withinOuterBounds = position.x >= -5.58 && position.x <= 11.58 && position.z >= -1.58 && position.z <= 10.35;
@@ -286,7 +395,8 @@ export function isInsideGallery(position: Vec3): boolean {
 const displayKeepOuts = [
     ...pieces.map(({ x, z }) => ({ x, z, halfX: 0.72, halfZ: 0.64 })),
     { ...closure, halfX: 0.88, halfZ: 0.62 },
-    { x: 7.15, z: 7.83, halfX: 0.82, halfZ: 0.74 }
+    { x: 7.15, z: 7.83, halfX: 0.82, halfZ: 0.74 },
+    ...passageWalls
 ];
 
 export function canWalkTo(position: Vec3): boolean {

@@ -1,12 +1,13 @@
 import type { AppBase, Entity } from 'playcanvas';
 import { RESOLUTION_FIXED } from 'playcanvas';
 
-import type { Music } from './audio';
+import type { AudioKind, Music } from './audio';
 import { tracks } from './audio';
 import { WalkController } from './walk-controller';
 
 const resolutionKey = 'del-papel-resolution';
 const volumeKey = 'del-papel-music-volume';
+const pieceVolumeKey = 'del-papel-piece-volume';
 const wait = (milliseconds: number): Promise<void> =>
     new Promise((resolve) => window.setTimeout(resolve, milliseconds));
 
@@ -42,13 +43,20 @@ export function mountStartScreen(app: AppBase, camera: Entity, music: Music): vo
     const topbar = required<HTMLElement>('.topbar');
     const enter = required<HTMLButtonElement>('#start-enter');
     const optionsToggle = required<HTMLButtonElement>('#start-options-toggle');
-    const options = required<HTMLElement>('#start-options');
+    const optionsBackdrop = required<HTMLElement>('#start-options-backdrop');
+    const optionsClose = required<HTMLButtonElement>('#start-options-close');
     const resolution = required<HTMLSelectElement>('#render-resolution');
     const volume = required<HTMLInputElement>('#music-volume');
     const volumeValue = required<HTMLOutputElement>('#music-volume-value');
+    const pieceVolume = required<HTMLInputElement>('#piece-volume');
+    const pieceVolumeValue = required<HTMLOutputElement>('#piece-volume-value');
     const menu = required<HTMLElement>('#start-menu');
     const loading = required<HTMLElement>('#start-loading');
     const welcome = required<HTMLElement>('#welcome-message');
+    const exitButton = required<HTMLButtonElement>('#exit-tour');
+    const exitConfirm = required<HTMLElement>('#exit-confirm');
+    const exitCancel = required<HTMLButtonElement>('#exit-cancel');
+    const exitAccept = required<HTMLButtonElement>('#exit-accept');
     const walk = camera.script?.get(WalkController);
     if (!(walk instanceof WalkController)) {
         throw new Error('La pantalla de inicio necesita el controlador del visitante.');
@@ -76,25 +84,78 @@ export function mountStartScreen(app: AppBase, camera: Entity, music: Music): vo
     window.addEventListener('resize', applyResolution);
     applyResolution();
 
-    const volumeSetting = readSetting(volumeKey);
-    const savedVolume = volumeSetting === null ? Number.NaN : Number(volumeSetting);
-    if (Number.isFinite(savedVolume) && savedVolume >= 0 && savedVolume <= 100) {
-        volume.value = String(savedVolume);
-    }
-    const updateVolume = (): void => {
-        volumeValue.textContent = `${volume.value}%`;
-        music.setVolume(Number(volume.value) / 100);
-        saveSetting(volumeKey, volume.value);
-    };
-    volume.addEventListener('input', updateVolume);
-    updateVolume();
+    // Volúmenes de la música de fondo y de las canciones de las piezas: se guardan y se aplican al instante.
+    const volumeControls: [HTMLInputElement, HTMLOutputElement, string, AudioKind][] = [
+        [volume, volumeValue, volumeKey, 'music'],
+        [pieceVolume, pieceVolumeValue, pieceVolumeKey, 'piece']
+    ];
+    const removeVolumeListeners = volumeControls.map(([input, output, key, kind]) => {
+        const setting = readSetting(key);
+        const saved = setting === null ? Number.NaN : Number(setting);
+        if (Number.isFinite(saved) && saved >= 0 && saved <= 100) {
+            input.value = String(saved);
+        }
+        const update = (): void => {
+            output.textContent = `${input.value}%`;
+            music.setVolume(kind, Number(input.value) / 100);
+            saveSetting(key, input.value);
+        };
+        input.addEventListener('input', update);
+        update();
+        return () => input.removeEventListener('input', update);
+    });
 
-    const toggleOptions = (): void => {
-        const show = options.hidden;
-        options.hidden = !show;
-        optionsToggle.setAttribute('aria-expanded', String(show));
+    // Popup de opciones: mientras está abierto el menú queda inerte (sin foco ni clics por detrás).
+    const setOptions = (open: boolean): void => {
+        optionsBackdrop.classList.toggle('is-open', open);
+        optionsToggle.setAttribute('aria-expanded', String(open));
+        menu.inert = open;
+        (open ? optionsClose : optionsToggle).focus();
     };
-    optionsToggle.addEventListener('click', toggleOptions);
+    // Confirmación de salida: el visitante se detiene mientras decide; al cancelar recupera el estado que tenía.
+    let pausedBeforeExit = false;
+    const setExitConfirm = (open: boolean): void => {
+        if (open === exitConfirm.classList.contains('is-open')) {
+            return;
+        }
+        if (open) {
+            pausedBeforeExit = walk.paused;
+            walk.paused = true;
+        } else {
+            walk.paused = pausedBeforeExit;
+        }
+        exitConfirm.classList.toggle('is-open', open);
+        exitButton.setAttribute('aria-expanded', String(open));
+        (open ? exitCancel : exitButton).focus();
+    };
+    exitButton.addEventListener('click', () => setExitConfirm(true));
+    exitCancel.addEventListener('click', () => setExitConfirm(false));
+    exitConfirm.addEventListener('click', (event) => {
+        if (event.target === exitConfirm) {
+            setExitConfirm(false);
+        }
+    });
+    // Recargar devuelve al menú con todo en su estado inicial (cámara, inspección, música y banner).
+    exitAccept.addEventListener('click', () => window.location.reload());
+
+    const onOptionsKey = (event: KeyboardEvent): void => {
+        if (event.code !== 'Escape') {
+            return;
+        }
+        if (optionsBackdrop.classList.contains('is-open')) {
+            setOptions(false);
+        } else if (exitConfirm.classList.contains('is-open')) {
+            setExitConfirm(false);
+        }
+    };
+    optionsToggle.addEventListener('click', () => setOptions(true));
+    optionsClose.addEventListener('click', () => setOptions(false));
+    optionsBackdrop.addEventListener('click', (event) => {
+        if (event.target === optionsBackdrop) {
+            setOptions(false);
+        }
+    });
+    window.addEventListener('keydown', onOptionsKey);
 
     let started = false;
     const onStart = async (): Promise<void> => {
@@ -115,15 +176,19 @@ export function mountStartScreen(app: AppBase, camera: Entity, music: Music): vo
         loading.hidden = true;
         loading.classList.remove('is-leaving');
 
-        const first = banner.getBoundingClientRect();
+        // El arte (2:1) pasa de la portada a la esquina con escala uniforme: se mide la imagen, no el marco.
+        const logo = banner.querySelector('img') ?? banner;
+        const first = logo.getBoundingClientRect();
         banner.classList.remove('intro-brand');
         topbar.append(banner);
         hud.classList.remove('is-intro');
-        const last = banner.getBoundingClientRect();
+        hud.classList.add('is-landing');
+        const last = logo.getBoundingClientRect();
+        const frame = banner.getBoundingClientRect();
         const transitionDuration = reducedMotion ? 0 : 900;
-        banner.style.transformOrigin = 'top left';
+        banner.style.transformOrigin = `${last.left - frame.left}px ${last.top - frame.top}px`;
         banner.style.transition = 'none';
-        banner.style.transform = `translate(${first.left - last.left}px, ${first.top - last.top}px) scale(${first.width / last.width}, ${first.height / last.height})`;
+        banner.style.transform = `translate(${first.left - last.left}px, ${first.top - last.top}px) scale(${first.width / last.width})`;
         void banner.offsetWidth;
         requestAnimationFrame(() => {
             banner.style.transition = `transform ${transitionDuration}ms cubic-bezier(.2,.75,.25,1)`;
@@ -134,6 +199,11 @@ export function mountStartScreen(app: AppBase, camera: Entity, music: Music): vo
         await wait(transitionDuration);
         screen.hidden = true;
         walk.paused = false;
+        // Limpia la animación en línea y deja que el marco y los controles aparezcan con sus transiciones de CSS.
+        banner.style.transition = '';
+        banner.style.transform = '';
+        banner.style.transformOrigin = '';
+        hud.classList.remove('is-landing');
 
         welcome.hidden = false;
         await wait(4000);
@@ -148,7 +218,8 @@ export function mountStartScreen(app: AppBase, camera: Entity, music: Music): vo
 
     app.on('destroy', () => {
         window.removeEventListener('resize', applyResolution);
+        window.removeEventListener('keydown', onOptionsKey);
         resolution.removeEventListener('change', onResolution);
-        volume.removeEventListener('input', updateVolume);
+        removeVolumeListeners.forEach((remove) => remove());
     });
 }

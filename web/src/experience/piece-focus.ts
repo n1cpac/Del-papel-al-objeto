@@ -43,9 +43,8 @@ export function mountPieceFocus(
     let openPiece: Piece | null = null;
     const openPanel = (piece: Piece): void => {
         openPiece = piece;
-        if (piece.audio) {
-            music.play(piece.audio);
-        }
+        // La música del recorrido se pausa (y recuerda su posición) mientras suena la canción de la pieza.
+        music.play(piece.audio?.src ?? null, 'piece', piece.audio?.gain);
         const rows = piece.fields.map(([key, value]) => `<dt>${key}</dt><dd>${value}</dd>`).join('');
         panelBody.innerHTML = `
             <p class="piece-station">${piece.station}</p>
@@ -63,7 +62,7 @@ export function mountPieceFocus(
         close.focus();
     };
     const closePanel = (): void => {
-        if (openPiece?.audio) {
+        if (openPiece) {
             music.play(tracks.tour);
         }
         panel.hidden = true;

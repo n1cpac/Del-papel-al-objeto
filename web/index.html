@@ -12,7 +12,7 @@
         <!-- Oculta la página hasta que estilos y logo estén listos (start-screen.ts añade .is-ready): evita el destello de HTML sin estilo. -->
         <style>
             html {
-                background: #fff8ef;
+                background: #fef5ea;
             }
             body:not(.is-ready) {
                 visibility: hidden;
@@ -22,7 +22,11 @@
     <body>
         <canvas id="application-canvas" aria-label="Sala 3D de la exposición Del papel al objeto"></canvas>
         <main id="experience-hud" class="hud is-intro" aria-label="Información de navegación">
-            <header class="topbar"></header>
+            <header class="topbar">
+                <button id="exit-tour" class="exit-button" type="button" aria-haspopup="dialog" aria-expanded="false">
+                    Salir
+                </button>
+            </header>
             <footer class="control-card">
                 <span class="desktop-help">Moverse: WASD / flechas <i>·</i> Mirar: clic y arrastre del mouse</span>
                 <span class="mobile-help">Moverse: joystick izquierdo <i>·</i> Mirar: arrastrar a la derecha</span>
@@ -47,6 +51,14 @@
                     <p class="start-description">
                         Explora libremente cinco piezas y descubre qué las convierte en una colección.
                     </p>
+                    <p class="start-notice" role="note">
+                        <span class="start-notice-icon" aria-hidden="true">♪</span>
+                        <span
+                            ><strong>Esta experiencia contiene música.</strong> Cada pieza tiene su propia canción, así
+                            que el volumen puede cambiar al inspeccionarlas. Ajústalo o silencia el audio en
+                            «Opciones».</span
+                        >
+                    </p>
                     <div class="start-actions">
                         <button id="start-enter" class="start-button start-button-primary" type="button">
                             Iniciar recorrido
@@ -61,27 +73,63 @@
                             Opciones
                         </button>
                     </div>
-                    <section id="start-options" class="start-options" aria-label="Opciones de la experiencia" hidden>
-                        <label class="option-field" for="render-resolution">
-                            <span>Resolución</span>
-                            <select id="render-resolution" name="resolution">
-                                <option value="480">480p · rendimiento</option>
-                                <option value="720">720p · equilibrado</option>
-                                <option value="1080">1080p · alta calidad</option>
-                            </select>
-                        </label>
-                        <label class="option-field" for="music-volume">
-                            <span
-                                >Volumen de música <output id="music-volume-value" for="music-volume">50%</output></span
-                            >
-                            <input id="music-volume" name="volume" type="range" min="0" max="100" step="1" value="50" />
-                        </label>
-                    </section>
                 </div>
                 <div id="start-loading" class="start-loading" role="status" aria-live="polite" hidden>
                     <span class="loading-spinner" aria-hidden="true"></span>
                     <span>Preparando la sala…</span>
                 </div>
+            </div>
+            <div id="start-options-backdrop" class="options-backdrop">
+                <section
+                    id="start-options"
+                    class="start-options"
+                    role="dialog"
+                    aria-modal="true"
+                    aria-labelledby="start-options-title"
+                >
+                    <header class="options-header">
+                        <h2 id="start-options-title">Opciones</h2>
+                        <button
+                            id="start-options-close"
+                            class="options-close"
+                            type="button"
+                            aria-label="Cerrar opciones"
+                        >
+                            ×
+                        </button>
+                    </header>
+                    <label class="option-field" for="render-resolution">
+                        <span>Resolución</span>
+                        <select id="render-resolution" name="resolution">
+                            <option value="480">480p · rendimiento</option>
+                            <option value="720">720p · equilibrado</option>
+                            <option value="1080">1080p · alta calidad</option>
+                        </select>
+                    </label>
+                    <label class="option-field" for="music-volume">
+                        <span>Música de fondo <output id="music-volume-value" for="music-volume">50%</output></span>
+                        <input id="music-volume" name="volume" type="range" min="0" max="100" step="1" value="50" />
+                    </label>
+                    <label class="option-field" for="piece-volume">
+                        <span
+                            >Canciones de las piezas
+                            <output id="piece-volume-value" for="piece-volume">50%</output></span
+                        >
+                        <input
+                            id="piece-volume"
+                            name="piece-volume"
+                            type="range"
+                            min="0"
+                            max="100"
+                            step="1"
+                            value="50"
+                        />
+                        <small
+                            >Suenan al inspeccionar cada pieza; la música de fondo se pausa mientras tanto. En 0 % se
+                            silencian.</small
+                        >
+                    </label>
+                </section>
             </div>
         </section>
         <div id="welcome-message" class="welcome-message" aria-live="polite" hidden>
@@ -98,6 +146,26 @@
             <button id="piece-panel-close" type="button" class="piece-panel-close" aria-label="Cerrar cédula">×</button>
             <div id="piece-panel-body"></div>
         </section>
+        <div id="exit-confirm" class="options-backdrop confirm-backdrop">
+            <section
+                class="start-options confirm-dialog"
+                role="alertdialog"
+                aria-modal="true"
+                aria-labelledby="exit-confirm-title"
+                aria-describedby="exit-confirm-text"
+            >
+                <h2 id="exit-confirm-title">¿Volver al menú principal?</h2>
+                <p id="exit-confirm-text">Saldrás del recorrido y volverás a la pantalla de inicio.</p>
+                <div class="confirm-actions">
+                    <button id="exit-cancel" class="start-button start-button-secondary" type="button">
+                        Seguir explorando
+                    </button>
+                    <button id="exit-accept" class="start-button start-button-primary" type="button">
+                        Salir al menú
+                    </button>
+                </div>
+            </section>
+        </div>
         <div id="debug-crosshair" class="debug-crosshair" aria-hidden="true" hidden></div>
         <button id="debug-readout" type="button" class="debug-readout" title="Clic para copiar" hidden></button>
         <div id="rotate-overlay" class="rotate-overlay" role="alert">

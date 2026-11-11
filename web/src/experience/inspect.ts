@@ -47,7 +47,6 @@ export function createInspector(app: AppBase, cameraEntity: Entity): Inspector {
     const position = new Vec3();
     const shift = new Vec3();
     const panel = document.querySelector<HTMLElement>('#piece-panel');
-    const brand = document.querySelector<HTMLElement>('.brand');
     const controlCard = document.querySelector<HTMLElement>('.control-card');
     const turnUp = new Quat();
     const turnSide = new Quat();
@@ -81,11 +80,8 @@ export function createInspector(app: AppBase, cameraEntity: Entity): Inspector {
                 ? Math.max(canvasRect.left, Math.min(panelRect.left, canvasRect.right))
                 : canvasRect.right;
         const leftFraction = Math.max(0.1, Math.min(1, (leftEdge - canvasRect.left) / canvasRect.width));
-        let topEdge = canvasRect.top;
+        const topEdge = canvasRect.top;
         let bottomEdge = canvasRect.bottom;
-        if (compactLayout.matches && brand && getComputedStyle(brand).visibility !== 'hidden') {
-            topEdge = Math.max(topEdge, brand.getBoundingClientRect().bottom + 16);
-        }
         if (compactLayout.matches && controlCard && getComputedStyle(controlCard).display !== 'none') {
             bottomEdge = Math.min(bottomEdge, controlCard.getBoundingClientRect().top - 16);
         }

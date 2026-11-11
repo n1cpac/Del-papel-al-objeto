@@ -10,12 +10,13 @@ export type Piece = {
     fields: [label: string, value: string][];
     description: string;
     detail: string;
-    /** Pista opcional (p. ej. './audio/piezas/manga.mp3') que reemplaza la música del recorrido al inspeccionar. */
-    audio?: string;
+    /** Canción que suena al inspeccionar la pieza (la del recorrido se pausa); `gain` la atenúa (0…1). */
+    audio?: { src: string; gain?: number };
 };
 
 export const piecesById = {
     manga: {
+        audio: { src: './audio/piezas/manga.mp3', gain: 0.45 },
         station: 'B · El papel, el origen',
         name: 'Tomo de manga de Yu-Gi-Oh!',
         x: 10.4,
@@ -34,6 +35,7 @@ export const piecesById = {
         detail: 'Permite contrastar la fuente original en blanco y negro con su transformación en cartas, figuras y textiles en Occidente.'
     },
     deck: {
+        audio: { src: './audio/piezas/deck.mp3' },
         station: 'C · Del personaje al producto',
         name: 'Deck estructurado de Kaiba',
         x: 7.8,
@@ -52,6 +54,7 @@ export const piecesById = {
         detail: 'Usa forros con un diseño representativo de la baraja.'
     },
     yuji: {
+        audio: { src: './audio/piezas/yuji.mp3' },
         station: 'C · Del personaje al producto',
         name: 'Funko Pop Yuji Itadori #1111',
         x: 5.4,
@@ -70,6 +73,7 @@ export const piecesById = {
         detail: 'Mantiene su caja original, factor clave en el coleccionismo actual.'
     },
     gon: {
+        audio: { src: './audio/piezas/gon.mp3' },
         station: 'C · Del personaje al producto',
         name: 'Funko Pop Gon Freecss #651',
         x: 3,
@@ -88,6 +92,7 @@ export const piecesById = {
         detail: 'Diseño estilizado “chibi” que atrae al público occidental.'
     },
     miku: {
+        audio: { src: './audio/piezas/miku.mp3' },
         station: 'D · El ídolo que se vuelve objeto',
         name: 'Peluche de Hatsune Miku',
         x: -0.2,
