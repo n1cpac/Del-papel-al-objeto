@@ -1,6 +1,7 @@
 import type { AppBase, LightComponent, RenderComponent } from 'playcanvas';
 import { BoundingBox, CameraFrame, Entity, Layer, Quat, Vec3 } from 'playcanvas';
 
+import { attachSpringBones } from './spring-bones';
 import { WalkController } from './walk-controller';
 
 const degreesPerPixel = 0.4;
@@ -81,6 +82,7 @@ export function createInspector(app: AppBase, cameraEntity: Entity): Inspector {
     const bounds = new BoundingBox();
     let model: Entity | null = null;
     let hiddenParts: Entity[] = [];
+    let stopSprings: (() => void) | null = null;
     let distance = 1;
     let minDistance = 0.5;
     let maxDistance = 2;
@@ -212,6 +214,8 @@ export function createInspector(app: AppBase, cameraEntity: Entity): Inspector {
             render.layers = [inspectLayer.id];
         }
         pivot.enabled = true;
+        // Las piezas con huesos de muelle (el peluche) rebotan al girarlas o moverlas.
+        stopSprings = attachSpringBones(app, model);
 
         // Centra la pieza en el pivote a partir de sus límites reales (sirve también para los GLB futuros).
         const meshes = (model.findComponents('render') as RenderComponent[]).flatMap((render) => render.meshInstances);
@@ -242,6 +246,7 @@ export function createInspector(app: AppBase, cameraEntity: Entity): Inspector {
         frame.enabled = false;
         overlay.enabled = false;
         pivot.enabled = false;
+        stopSprings?.();
         model?.destroy();
         model = null;
         hiddenParts.forEach((part) => (part.enabled = true));

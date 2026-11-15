@@ -1,6 +1,7 @@
-import type { AppBase, ContainerResource, Material, RenderComponent, Vec3 } from 'playcanvas';
+import type { AppBase, ContainerResource, Material, RenderComponent } from 'playcanvas';
 import {
     ADDRESS_CLAMP_TO_EDGE,
+    BoundingBox,
     Color,
     Entity,
     FILTER_LINEAR,
@@ -9,11 +10,13 @@ import {
     PIXELFORMAT_SRGBA8,
     SEMANTIC_TANGENT,
     StandardMaterial,
-    Texture
+    Texture,
+    Vec3
 } from 'playcanvas';
 
 import type { Piece } from './pieces';
 import { pieces, piecesById } from './pieces';
+import { firmSpringTag, springTag, stiffSpringTag } from './spring-bones';
 
 type MaterialSet = {
     wall: StandardMaterial;
@@ -462,19 +465,31 @@ function addFigure(
     return figure;
 }
 
-function addPlush(
-    parent: Entity,
-    x: number,
-    z: number,
-    materials: MaterialSet,
-    standTargets: StandPlacement[]
-): Entity {
+function addPlush(app: AppBase, parent: Entity, x: number, z: number, standTargets: StandPlacement[]): Entity {
     const plush = addPedestal(parent, 'Pieza: peluche de Hatsune Miku', x, z, standTargets);
-    addSphere(plush, 'Miku: cabeza provisional', [0, 1.44, 0], [0.39, 0.36, 0.34], materials.white);
-    addBox(plush, 'Miku: flequillo', [0, 1.62, -0.015], [0.36, 0.13, 0.25], materials.teal);
-    addBox(plush, 'Miku: coleta izquierda', [-0.29, 1.3, 0], [0.13, 0.62, 0.16], materials.teal);
-    addBox(plush, 'Miku: coleta derecha', [0.29, 1.3, 0], [0.13, 0.62, 0.16], materials.teal);
-    addBox(plush, 'Miku: cuerpo textil', [0, 1.06, 0], [0.28, 0.38, 0.22], materials.stations.D);
+    app.assets.loadFromUrl(`${import.meta.env.BASE_URL}models/peluche-miku.glb`, 'container', (error, asset) => {
+        if (error || !asset?.resource) {
+            console.warn('No se pudo cargar el modelo del peluche (peluche-miku.glb).', error);
+            return;
+        }
+        const model = (asset.resource as ContainerResource).instantiateRenderEntity();
+        // El GLB mide 0,2 m, mira a -Z y tiene los pies en y = -0,139: se amplía ×4, se gira hacia el pasillo
+        // y se apoya sobre el stand (y = 0,87).
+        model.setLocalScale(4, 4, 4);
+        model.setLocalEulerAngles(0, 180, 0);
+        model.setLocalPosition(0, 0.87 + 0.139 * 4, 0);
+        // Malla con huesos: sin límites fijos, la inspección mediría la pieza antes de que el esqueleto se actualice.
+        for (const render of model.findComponents('render') as RenderComponent[]) {
+            render.customAabb = new BoundingBox(new Vec3(0, -0.04, 0.004), new Vec3(0.11, 0.105, 0.05));
+        }
+        // Huesos que rebotan al mover la pieza en la inspección.
+        const springBones = /^(cabeza|falda|correa|bufanda\.\d+|brazo\.[LR]|coleta\.[LR]\.\d+)$/;
+        model.find((node) => springBones.test(node.name)).forEach((bone) => bone.tags.add(springTag));
+        // Las coletas se desplazan un poco menos que el resto; la falda y las mangas (huesos de los brazos), menos aún.
+        model.find((node) => node.name.startsWith('coleta.')).forEach((bone) => bone.tags.add(firmSpringTag));
+        model.find((node) => /^(falda|brazo\.)/.test(node.name)).forEach((bone) => bone.tags.add(stiffSpringTag));
+        plush.addChild(model);
+    });
     return plush;
 }
 
@@ -1006,7 +1021,7 @@ export function buildRoom(app: AppBase): Map<Piece, Entity> {
         ['deck', deck.x, 'carta.png', materials.stations.C],
         ['yuji', yuji.x, 'itadori.png', materials.stations.C],
         ['gon', gon.x, 'gon.png', materials.stations.C],
-        ['miku', miku.x, 'miku.png', materials.stations.D]
+        ['miku', miku.x, 'miku_adelante.png', materials.stations.D]
     ];
     for (const [label, x, imageFile, accent] of panelSpecs) {
         addObjectPanel(app, room, label, x, signZ, imageFile, accent, materials);
@@ -1028,7 +1043,7 @@ export function buildRoom(app: AppBase): Map<Piece, Entity> {
             gon,
             addFigure(room, 'Pieza: Funko Gon', gon.x, gon.z, materials.green, materials.teal, materials, standTargets)
         ],
-        [miku, addPlush(room, miku.x, miku.z, materials, standTargets)]
+        [miku, addPlush(app, room, miku.x, miku.z, standTargets)]
     ]);
 
     app.assets.loadFromUrl(`${import.meta.env.BASE_URL}models/psx_tv_stand.glb`, 'container', (error, asset) => {
