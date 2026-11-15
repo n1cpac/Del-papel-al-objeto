@@ -25,6 +25,8 @@ export class WalkController extends Script {
     private readonly speed = 1.75;
     private readonly mobileSpeed = 1.65;
     private readonly lookSensitivity = 0.11;
+    // Arrastre táctil: más sensible que el ratón, porque en móvil el dedo recorre menos píxeles.
+    private readonly touchLookSensitivity = 0.16;
     private readonly bobAmount = 0.018;
     private readonly bobRate = Math.PI * 3.6;
     /** Pausa el recorrido (p. ej. durante la inspección) sin dejar de leer la entrada, para no perder teclas sostenidas. */
@@ -76,8 +78,8 @@ export class WalkController extends Script {
                 this.yaw -= mouse[0] * this.lookSensitivity;
                 this.pitch = Math.max(-68, Math.min(68, this.pitch - mouse[1] * this.lookSensitivity));
             }
-            this.yaw -= rightInput[0] * this.lookSensitivity;
-            this.pitch = Math.max(-68, Math.min(68, this.pitch - rightInput[1] * this.lookSensitivity));
+            this.yaw -= rightInput[0] * this.touchLookSensitivity;
+            this.pitch = Math.max(-68, Math.min(68, this.pitch - rightInput[1] * this.touchLookSensitivity));
             this.entity.setLocalEulerAngles(this.pitch, this.yaw, 0);
         }
 

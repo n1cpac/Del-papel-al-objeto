@@ -31,10 +31,11 @@ export function createInspector(app: AppBase, cameraEntity: Entity): Inspector {
     // Post-proceso solo activo durante la inspección: el recorrido normal no paga su costo.
     const frame = new CameraFrame(app, camera);
     frame.rendering.toneMapping = camera.toneMapping;
-    frame.rendering.samples = 4;
+    // Móvil: sin suavizado múltiple y con desenfoque de calidad normal; en pantalla pequeña casi no se nota y cuesta mucho menos.
+    frame.rendering.samples = touchCapable ? 1 : 4;
     frame.dof.enabled = true;
-    frame.dof.highQuality = true;
-    frame.dof.blurRadius = 7;
+    frame.dof.highQuality = !touchCapable;
+    frame.dof.blurRadius = touchCapable ? 5 : 7;
     frame.vignette.intensity = 0.55;
     frame.vignette.inner = 0.35;
     frame.vignette.outer = 1.1;

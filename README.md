@@ -18,13 +18,13 @@ La experiencia está dirigida tanto a aficionados al manga, el anime y los juego
 
 ## Recorrido y contenido
 
-| Estación | Tema | Contenido e interacción prevista |
-|---|---|---|
-| A. Bienvenida | Orientación | Introducción a la pregunta curatorial, instrucciones de navegación y acceso a una sugerencia de recorrido. |
-| B. El papel, el origen | Manga y narrativa gráfica | Tomo de *Yu-Gi-Oh!*; contexto editorial y lectura; visualización de páginas cuando los materiales estén disponibles. |
-| C. Del personaje al producto | Licencia y producción comercial | Deck de Kaiba y figuras Funko Pop de Yuji Itadori y Gon Freecss; inspección de piezas y comparador papel–figura. |
-| D. El ídolo que se vuelve objeto | De lo digital a lo tangible | Peluche de Hatsune Miku; explicación de la cultura de ídolos virtuales y de su materialización textil. |
-| E. ¿Qué hace una colección? | Criterio curatorial | Actividad para agrupar los cinco objetos con un criterio propio y compararlo con el criterio de la exposición. |
+| Estación                         | Tema                            | Contenido e interacción prevista                                                                                     |
+| -------------------------------- | ------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| A. Bienvenida                    | Orientación                     | Introducción a la pregunta curatorial, instrucciones de navegación y acceso a una sugerencia de recorrido.           |
+| B. El papel, el origen           | Manga y narrativa gráfica       | Tomo de _Yu-Gi-Oh!_; contexto editorial y lectura; visualización de páginas cuando los materiales estén disponibles. |
+| C. Del personaje al producto     | Licencia y producción comercial | Deck de Kaiba y figuras Funko Pop de Yuji Itadori y Gon Freecss; inspección de piezas y comparador papel–figura.     |
+| D. El ídolo que se vuelve objeto | De lo digital a lo tangible     | Peluche de Hatsune Miku; explicación de la cultura de ídolos virtuales y de su materialización textil.               |
+| E. ¿Qué hace una colección?      | Criterio curatorial             | Actividad para agrupar los cinco objetos con un criterio propio y compararlo con el criterio de la exposición.       |
 
 El visitante podrá moverse sin un orden obligatorio. Se ofrecerá una orientación inicial y señales dentro de la sala para ayudar a encontrar las estaciones. Los textos principales serán breves y claros; el vocabulario especializado podrá explicarse mediante ayudas complementarias.
 
@@ -56,12 +56,12 @@ El rendimiento móvil se tratará como requisito de diseño: geometría y textur
 
 ### Controles previstos
 
-| Acción | Escritorio | Móvil |
-|---|---|---|
-| Moverse | WASD o flechas | Joystick virtual |
-| Mirar alrededor | Ratón | Arrastrar sobre la vista |
-| Interactuar | Clic o tecla indicada en pantalla | Toque sobre el objeto o botón |
-| Cerrar panel | Esc o botón de cierre | Botón de cierre visible |
+| Acción          | Escritorio                        | Móvil                         |
+| --------------- | --------------------------------- | ----------------------------- |
+| Moverse         | WASD o flechas                    | Joystick virtual              |
+| Mirar alrededor | Ratón                             | Arrastrar sobre la vista      |
+| Interactuar     | Clic o tecla indicada en pantalla | Toque sobre el objeto o botón |
+| Cerrar panel    | Esc o botón de cierre             | Botón de cierre visible       |
 
 Los controles finales se confirmarán en el prototipo y se mostrarán en la experiencia.
 
@@ -73,20 +73,20 @@ Antes de cerrar cada pieza se deberán registrar sus datos de identificación y 
 
 ## Plan de trabajo: una semana
 
-| Día | Enfoque | Entregable |
-|---|---|---|
-| 1 | **Completado:** cerrar geometría, estaciones, piezas, secuencia principal, controles previstos y criterios de diseño. | Plano cenital de referencia y decisiones documentadas en este README. |
-| 2 | Montar sala en L, estaciones provisionales y controles de recorrido para desktop y móvil. | Blockout 3D de la sala con navegación libre. |
-| 3 | Integrar paneles, cédulas, orientación y contenido de las cinco estaciones. | Exposición completa en contenido. |
-| 4 | Integrar modelos provisionales o finales; añadir inspección de piezas y comparador. | Piezas explorables y comparación funcional. |
-| 5 | Implementar actividad de clasificación y cierre curatorial. | Interacción final conectada con los objetivos de aprendizaje. |
-| 6 | Ajustar interfaz móvil, legibilidad, carga y accesibilidad básica. | Versión adaptable revisada en los dispositivos disponibles. |
-| 7 | Corregir problemas, publicar y documentar uso y actualización. | Enlace compartible y README actualizado con instrucciones reales. |
+| Día | Enfoque                                                                                                               | Entregable                                                            |
+| --- | --------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------- |
+| 1   | **Completado:** cerrar geometría, estaciones, piezas, secuencia principal, controles previstos y criterios de diseño. | Plano cenital de referencia y decisiones documentadas en este README. |
+| 2   | Montar sala en L, estaciones provisionales y controles de recorrido para desktop y móvil.                             | Blockout 3D de la sala con navegación libre.                          |
+| 3   | Integrar paneles, cédulas, orientación y contenido de las cinco estaciones.                                           | Exposición completa en contenido.                                     |
+| 4   | Integrar modelos provisionales o finales; añadir inspección de piezas y comparador.                                   | Piezas explorables y comparación funcional.                           |
+| 5   | Implementar actividad de clasificación y cierre curatorial.                                                           | Interacción final conectada con los objetivos de aprendizaje.         |
+| 6   | Ajustar interfaz móvil, legibilidad, carga y accesibilidad básica.                                                    | Versión adaptable revisada en los dispositivos disponibles.           |
+| 7   | Corregir problemas, publicar y documentar uso y actualización.                                                        | Enlace compartible y README actualizado con instrucciones reales.     |
 
 ## Estado actual
 
 - **Completado:** sala en L de 144 m² con arquitectura modular (`hallway_diorama.glb`), techo artesonado, iluminación, puerta-portal de video en arco, stands `psx_tv_stand.glb`, infografía vertical, paneles individuales por objeto, cédulas curatoriales, audio ambiental y por pieza, modo de inspección 3D, portada adaptable y puerta de salida final con pantalla de agradecimiento.
-- **Pendiente:** únicamente reemplazar los 5 modelos geométricos provisionales de los objetos (*Yu-Gi-Oh!* manga, Deck de Kaiba, Funko Yuji, Funko Gon y peluche de Hatsune Miku) por sus modelos `.glb` definitivos en `web/public/models/`.
+- **Pendiente:** únicamente reemplazar los 5 modelos geométricos provisionales de los objetos (_Yu-Gi-Oh!_ manga, Deck de Kaiba, Funko Yuji, Funko Gon y peluche de Hatsune Miku) por sus modelos `.glb` definitivos en `web/public/models/`.
 
 ## Criterios de cierre
 
@@ -111,8 +111,9 @@ Vite inicia el servidor de desarrollo en `http://localhost:5173`. Para generar e
 
 ## Créditos y fuentes
 
-- Guion museológico, curatorial, museográfico, educativo y de mediación: documento del proyecto *Del papel al objeto*.
+- Guion museológico, curatorial, museográfico, educativo y de mediación: documento del proyecto _Del papel al objeto_.
 - Modelado y recursos visuales: equipo del proyecto (por completar).
+- Pedestales: basados en «[Classical Museum Pedestals - Asset Pack](https://sketchfab.com/3d-models/classical-museum-pedestals-asset-pack-ed296d2da43845f5a5b007c3af1cdff0)» de [Samuel Francis Johnson (Oneironauticus)](https://sketchfab.com/oneironauticus), con licencia [CC-BY-4.0](http://creativecommons.org/licenses/by/4.0/).
 - Referencias y créditos específicos de piezas, imágenes y materiales: por completar antes de publicar.
 
 ## Día 1 · Plano y criterios de diseño
@@ -127,19 +128,19 @@ El recorrido inicia en A. Desde la entrada, sube por el brazo vertical hasta B y
 
 ### Piezas representadas
 
-| Estación | Piezas | Cantidad |
-|---|---|---:|
-| B. El papel, el origen | Tomo de manga *Yu-Gi-Oh!* | 1 |
-| C. Del personaje al producto | Deck de Kaiba, Funko Pop Yuji Itadori #1111 y Funko Pop Gon Freecss #651 | 3 |
-| D. El ídolo que se vuelve objeto | Peluche de Hatsune Miku | 1 |
-| **Total** |  | **5** |
+| Estación                         | Piezas                                                                   | Cantidad |
+| -------------------------------- | ------------------------------------------------------------------------ | -------: |
+| B. El papel, el origen           | Tomo de manga _Yu-Gi-Oh!_                                                |        1 |
+| C. Del personaje al producto     | Deck de Kaiba, Funko Pop Yuji Itadori #1111 y Funko Pop Gon Freecss #651 |        3 |
+| D. El ídolo que se vuelve objeto | Peluche de Hatsune Miku                                                  |        1 |
+| **Total**                        |                                                                          |    **5** |
 
 ### Criterios para construir y revisar la sala
 
 1. **Secuencia legible:** la ruta se entiende en el orden A → B → C → D → E; en el brazo horizontal avanza de derecha a izquierda.
 2. **Orientación coherente:** el visitante reconoce entrada y salida en la parte inferior, y entiende el cambio desde el brazo vertical hacia el horizontal.
 3. **Cinco piezas identificables:** se distinguen el tomo, el deck, las dos figuras Funko y el peluche en sus estaciones correspondientes.
-4. **Fidelidad al guion:** la pieza de manga corresponde a *Yu-Gi-Oh!*; los objetos, rótulos y actividad final coinciden con el guion curatorial.
+4. **Fidelidad al guion:** la pieza de manga corresponde a _Yu-Gi-Oh!_; los objetos, rótulos y actividad final coinciden con el guion curatorial.
 5. **Circulación despejada:** el paso entre entrada, estaciones y salida se mantiene libre; pedestales y paneles no invaden el recorrido.
 6. **Comprensible para público nuevo:** cada estación identifica el objeto en lenguaje cotidiano y ofrece contexto antes de usar términos especializados.
 7. **Exploración sin bloqueo:** la ruta está señalada, pero permite detenerse, observar y reanudar el recorrido sin perder la orientación.
@@ -149,13 +150,13 @@ El recorrido inicia en A. Desde la entrada, sube por el brazo vertical hasta B y
 
 ### Distribución de estaciones
 
-| Orden | Estación | Ubicación según plano | Función |
-|---:|---|---|---|
-| 1 | A. Bienvenida | Brazo vertical, junto a la entrada | Orientación y pregunta guía. |
-| 2 | B. El papel, el origen | Unión con el brazo horizontal, extremo derecho | Presentar el tomo de manga. |
-| 3 | C. Del personaje al producto | Brazo horizontal, zona central | Reunir el deck y las dos figuras para comparar formatos. |
-| 4 | D. El ídolo que se vuelve objeto | Brazo horizontal, hacia la izquierda | Presentar el peluche de Hatsune Miku. |
-| 5 | E. ¿Qué hace una colección? | Brazo horizontal, extremo izquierdo | Cerrar con la actividad y la pregunta de colección. |
+| Orden | Estación                         | Ubicación según plano                          | Función                                                  |
+| ----: | -------------------------------- | ---------------------------------------------- | -------------------------------------------------------- |
+|     1 | A. Bienvenida                    | Brazo vertical, junto a la entrada             | Orientación y pregunta guía.                             |
+|     2 | B. El papel, el origen           | Unión con el brazo horizontal, extremo derecho | Presentar el tomo de manga.                              |
+|     3 | C. Del personaje al producto     | Brazo horizontal, zona central                 | Reunir el deck y las dos figuras para comparar formatos. |
+|     4 | D. El ídolo que se vuelve objeto | Brazo horizontal, hacia la izquierda           | Presentar el peluche de Hatsune Miku.                    |
+|     5 | E. ¿Qué hace una colección?      | Brazo horizontal, extremo izquierdo            | Cerrar con la actividad y la pregunta de colección.      |
 
 ### Lista cerrada de tareas del Día 1
 
@@ -182,7 +183,6 @@ El recorrido inicia en A. Desde la entrada, sube por el brazo vertical hasta B y
 ### Criterio de cierre del Día 1
 
 El Día 1 se considera completado porque hay un plano cenital único de referencia, están ubicadas y nombradas las cinco estaciones, se contabilizan las cinco piezas, se fijaron el orden del recorrido y los controles previstos, y quedaron documentadas las condiciones que se revisarán en el prototipo.
-
 
 ## Día 2 · Sala base y navegación
 

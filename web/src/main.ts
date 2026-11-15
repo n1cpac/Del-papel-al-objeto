@@ -1,6 +1,7 @@
 import {
     AppBase,
     AppOptions,
+    BatchManager,
     CameraComponentSystem,
     Color,
     ContainerHandler,
@@ -24,7 +25,7 @@ import { createInspector } from './experience/inspect';
 import { mountMobileFullscreen } from './experience/mobile-fullscreen';
 import { mountNpcGuide } from './experience/npc';
 import { mountPieceFocus } from './experience/piece-focus';
-import { buildRoom } from './experience/room';
+import { buildRoom, mountDesktopLighting, mountEntranceCulling } from './experience/room';
 import { mountStartScreen } from './experience/start-screen';
 
 const canvas = document.getElementById('application-canvas');
@@ -47,6 +48,8 @@ createOptions.componentSystems = [
     ScriptComponentSystem
 ];
 createOptions.resourceHandlers = [TextureHandler, ContainerHandler, ScriptHandler];
+// Agrupación de mallas fijas en lotes (ver batchStaticMeshes en room.ts).
+createOptions.batchManager = BatchManager;
 
 const app = new AppBase(canvas);
 app.init(createOptions);
@@ -78,7 +81,9 @@ app.root.addChild(fillLight);
 
 app.start();
 const pedestals = buildRoom(app);
+mountDesktopLighting(app);
 const camera = createVisitorCamera(app);
+mountEntranceCulling(app, camera);
 mountHud(app);
 const music = createMusic(app);
 mountStartScreen(app, camera, music);

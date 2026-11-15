@@ -76,7 +76,10 @@ export function mountStartScreen(app: AppBase, camera: Entity, music: Music): vo
     const applyResolution = (): void => {
         const height = Number(resolution.value);
         const aspect = app.graphicsDevice.canvas.clientWidth / Math.max(1, app.graphicsDevice.canvas.clientHeight);
-        app.setCanvasResolution(RESOLUTION_FIXED, Math.round(height * aspect), height);
+        // El motor multiplica la resolución fijada por la razón de píxeles del dispositivo (hasta 1,4 en móvil):
+        // se divide para que «720p» sean 720 líneas reales y no ~1008.
+        const ratio = Math.min(app.graphicsDevice.maxPixelRatio, window.devicePixelRatio || 1);
+        app.setCanvasResolution(RESOLUTION_FIXED, Math.round((height * aspect) / ratio), Math.round(height / ratio));
     };
     const onResolution = (): void => {
         saveSetting(resolutionKey, resolution.value);

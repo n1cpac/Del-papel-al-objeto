@@ -1,16 +1,19 @@
-import type { AppBase, ContainerResource, Material, RenderComponent } from 'playcanvas';
+import type { AppBase, ContainerResource, LightComponent, Material, RenderComponent } from 'playcanvas';
 import {
     ADDRESS_CLAMP_TO_EDGE,
     BoundingBox,
     Color,
     Entity,
     FILTER_LINEAR,
+    LAYERID_WORLD,
+    Layer,
     Mesh,
     MeshInstance,
     PIXELFORMAT_SRGBA8,
     SEMANTIC_TANGENT,
     StandardMaterial,
     Texture,
+    Vec2,
     Vec3
 } from 'playcanvas';
 
@@ -135,8 +138,13 @@ function loadPictureMaterial(app: AppBase, imageFile: string, errorMessage: stri
 
 type StandPlacement = {
     holder: Entity;
-    scale: [number, number, number];
+    /** Desplazamiento en X de cada plinto bajo la pieza (uno centrado; la infografía, ancha, lleva dos). */
+    xOffsets: number[];
 };
+
+// Plinto clásico (models/pedestal/pedestal-museo.gltf): mide 1,44 × 1,86 m; se escala para que su tapa quede a
+// 0,87 m, la altura sobre la que ya están apoyadas las piezas.
+const plinthScale = 0.87 / 1.86;
 
 function addObjectPanel(
     app: AppBase,
@@ -292,8 +300,40 @@ function createArchPortalMesh(app: AppBase): Mesh {
     return mesh;
 }
 
-/** Video vertical (9:16) adaptado a la geometría del arco del muro de paso. No tiene colisión: se atraviesa. */
+/**
+ * Puerta del muro de paso adaptada a la geometría del arco. No tiene colisión: se atraviesa.
+ * Escritorio: video vertical (9:16) en bucle. Móvil: la imagen fija carta.png, porque decodificar y subir el video
+ * en cada fotograma costaba más de la mitad del rendimiento (Redmi Note 13 Pro: de 21 a 50 fps sin el video).
+ */
 function addDoorVideo(app: AppBase, parent: Entity): void {
+    const surface = new StandardMaterial();
+    surface.diffuse = new Color(0, 0, 0);
+    surface.emissive = new Color(1, 1, 1);
+    // Sin iluminación: la puerta se ve con su brillo propio, igual desde ambos lados.
+    surface.useLighting = false;
+    surface.update();
+
+    const portal = new Entity('Puerta · Carta de Yugi');
+    portal.setLocalPosition(9, 0, 4);
+    portal.addComponent('render', { meshInstances: [new MeshInstance(createArchPortalMesh(app), surface)] });
+    parent.addChild(portal);
+
+    if (window.matchMedia('(pointer: coarse)').matches) {
+        const texture = mediaTexture(app, 'Imagen · puerta', true);
+        // carta.png (3:4) es más ancha que el arco (~0,62): se recortan los lados para no deformarla.
+        surface.emissiveMapTiling = new Vec2(0.823, 1);
+        surface.emissiveMapOffset = new Vec2(0.089, 0);
+        const image = new Image();
+        image.addEventListener('load', () => {
+            texture.setSource(image);
+            surface.emissiveMap = texture;
+            surface.update();
+        });
+        image.addEventListener('error', () => console.warn('No se pudo cargar la imagen de la puerta (carta.png).'));
+        image.src = `${import.meta.env.BASE_URL}images/carta.png`;
+        return;
+    }
+
     const video = document.createElement('video');
     video.src = `${import.meta.env.BASE_URL}videos/puerta-carta-yugi.mp4`;
     video.loop = true;
@@ -301,20 +341,9 @@ function addDoorVideo(app: AppBase, parent: Entity): void {
     video.muted = true;
     video.playsInline = true;
     video.crossOrigin = 'anonymous';
-
     const texture = mediaTexture(app, 'Video · puerta', false);
-    const surface = new StandardMaterial();
-    surface.diffuse = new Color(0, 0, 0);
-    surface.emissive = new Color(1, 1, 1);
     surface.emissiveMap = texture;
-    // Sin iluminación: el video se ve con su brillo propio, igual desde ambos lados.
-    surface.useLighting = false;
     surface.update();
-
-    const portal = new Entity('Puerta · video Carta de Yugi');
-    portal.setLocalPosition(9, 0, 4);
-    portal.addComponent('render', { meshInstances: [new MeshInstance(createArchPortalMesh(app), surface)] });
-    parent.addChild(portal);
 
     video.addEventListener(
         'canplay',
@@ -369,7 +398,7 @@ function addPedestal(
     x: number,
     z: number,
     standTargets: StandPlacement[],
-    scale: [number, number, number] = [1, 1, 1]
+    xOffsets: number[] = [0]
 ): Entity {
     const pedestal = new Entity(id);
     pedestal.setLocalPosition(x, 0, z);
@@ -378,7 +407,7 @@ function addPedestal(
     const standHolder = new Entity(`${id}:mesa`);
     standHolder.tags.add('base');
     pedestal.addChild(standHolder);
-    standTargets.push({ holder: standHolder, scale });
+    standTargets.push({ holder: standHolder, xOffsets });
     return pedestal;
 }
 
@@ -390,7 +419,8 @@ function addInfographicStand(
     materials: MaterialSet,
     standTargets: StandPlacement[]
 ): void {
-    const stand = addPedestal(parent, 'Infografía · colección japonesa', x, z, standTargets, [1.38, 1, 0.92]);
+    // Dos plintos lado a lado (≈1,5 m) sostienen el zócalo de la infografía sin deformar el modelo.
+    const stand = addPedestal(parent, 'Infografía · colección japonesa', x, z, standTargets, [-0.42, 0.42]);
     addBox(stand, 'Infografía · zócalo', [0, 0.9, 0], [1.48, 0.07, 0.28], materials.ceilingBeam).tags.add('base');
     addBox(
         stand,
@@ -953,8 +983,11 @@ function populateDioramaArchitecture(app: AppBase, room: Entity, materials: Mate
 /** Construye la sala y devuelve el pedestal de cada pieza. */
 export function buildRoom(app: AppBase): Map<Piece, Entity> {
     const materials = makeMaterials();
-    const room = new Entity('Sala · L · 144 m²');
+    const room = new Entity(roomName);
     app.root.addChild(room);
+    // Piezas inspeccionables y flechas animadas: se copian o se mueven, así que no entran en los lotes estáticos.
+    const notBatched: Entity[] = [];
+    const batchStatic = createStaticBatcher(app, room, notBatched);
 
     // Respaldo estructural opaco detrás de los paneles del diorama (desplazado 0,09 m hacia el exterior).
     addBox(room, 'Piso · brazo horizontal', [3, -0.1, 1], [18, 0.2, 6], materials.floor);
@@ -1012,6 +1045,7 @@ export function buildRoom(app: AppBase): Map<Piece, Entity> {
             return;
         }
         populateDioramaArchitecture(app, room, materials, parts);
+        batchStatic();
     });
 
     // Paneles individuales detrás de cada objeto e infografía vertical en el extremo oeste.
@@ -1030,7 +1064,7 @@ export function buildRoom(app: AppBase): Map<Piece, Entity> {
     const standTargets: StandPlacement[] = [];
     addInfographicStand(app, room, -3.45, -0.72, materials, standTargets);
 
-    // Piezas del brazo horizontal sobre stands del modelo psx_tv_stand.glb.
+    // Piezas del brazo horizontal sobre plintos clásicos (models/pedestal/pedestal-museo.gltf).
     const pedestals = new Map<Piece, Entity>([
         [intro, addIntroImage(app, room, materials)],
         [manga, addBook(room, manga.x, manga.z, materials, standTargets)],
@@ -1046,18 +1080,29 @@ export function buildRoom(app: AppBase): Map<Piece, Entity> {
         [miku, addPlush(app, room, miku.x, miku.z, standTargets)]
     ]);
 
-    app.assets.loadFromUrl(`${import.meta.env.BASE_URL}models/psx_tv_stand.glb`, 'container', (error, asset) => {
-        if (error || !asset?.resource) {
-            console.warn('No se pudo cargar el modelo del stand (psx_tv_stand.glb).', error);
-            return;
+    app.assets.loadFromUrl(
+        `${import.meta.env.BASE_URL}models/pedestal/pedestal-museo.gltf`,
+        'container',
+        (error, asset) => {
+            if (error || !asset?.resource) {
+                console.warn('No se pudo cargar el modelo del pedestal (pedestal-museo.gltf).', error);
+                return;
+            }
+            const resource = asset.resource as ContainerResource;
+            for (const { holder, xOffsets } of standTargets) {
+                for (const offset of xOffsets) {
+                    const plinth = resource.instantiateRenderEntity();
+                    plinth.setLocalScale(plinthScale, plinthScale, plinthScale);
+                    plinth.setLocalPosition(offset, 0, 0);
+                    // La placa del modelo está en su cara -X: se gira para que mire al pasillo (+Z).
+                    plinth.setLocalEulerAngles(0, 90, 0);
+                    holder.addChild(plinth);
+                }
+            }
+            // Todos comparten un material: quedan en pocos lotes junto con el resto de la sala.
+            batchStatic();
         }
-        const resource = asset.resource as ContainerResource;
-        for (const { holder, scale } of standTargets) {
-            const stand = resource.instantiateRenderEntity();
-            stand.setLocalScale(...scale);
-            holder.addChild(stand);
-        }
-    });
+    );
 
     const arrowMaterial = material('#159b95', '#159b95');
     const arrows = pieces.map((piece) => addInteractionArrow(room, piece, arrowMaterial));
@@ -1072,10 +1117,193 @@ export function buildRoom(app: AppBase): Map<Piece, Entity> {
     app.on('update', animateArrows);
     app.once('destroy', () => app.off('update', animateArrows));
 
+    notBatched.push(...pedestals.values(), ...arrows);
+    batchStatic();
     return pedestals;
 }
 
 const signZ = -1.76;
+const roomName = 'Sala · L · 144 m²';
+// Capas donde se dibujan los lotes estáticos de cada lado del muro de paso.
+const zoneLayerNames = { entrance: 'Zona · entrada', gallery: 'Zona · galería' };
+
+/**
+ * Escritorio: iluminación de acento. Un foco cálido y cerrado sobre cada objeto y panel (luz de museo); la luz
+ * general (ambiente y direccionales) baja para que los focos se noten: con la luz original apenas se distinguían.
+ * Para no perder rendimiento: siete focos sin sombras y de alcance corto (se descartaron cuatro luces de plafón que
+ * costaban mucho y casi no se veían). El motor reparte las luces por zonas de pantalla (clustered lighting) y cada
+ * píxel solo calcula las que lo alcanzan. En móvil no se crean.
+ */
+export function mountDesktopLighting(app: AppBase): void {
+    if (window.matchMedia('(pointer: coarse)').matches) {
+        return;
+    }
+    // Las luces iluminan solo sus capas: el mundo y las capas de los lotes de cada zona.
+    const layers = [
+        LAYERID_WORLD,
+        ...Object.values(zoneLayerNames).flatMap((name) => {
+            const layer = app.scene.layers.getLayerByName(name);
+            return layer ? [layer.id] : [];
+        })
+    ];
+    // Valores ajustados viendo la sala: penumbra legible con charcos de luz sobre los objetos.
+    app.scene.ambientLight.set(0.44, 0.44, 0.44);
+    const mainLight = app.root.findByName('Luz principal') as Entity | null;
+    const fillLight = app.root.findByName('Luz de relleno') as Entity | null;
+    if (mainLight?.light) {
+        mainLight.light.intensity = 0.7;
+    }
+    if (fillLight?.light) {
+        fillLight.light.intensity = 0.35;
+    }
+
+    const { intro, manga, deck, yuji, gon, miku, coleccion } = piecesById;
+    for (const piece of [intro, manga, deck, yuji, gon, miku, coleccion]) {
+        const spot = new Entity(`Foco · ${piece.name}`);
+        spot.addComponent('light', {
+            type: 'spot',
+            color: new Color().fromString('#ffd9a8'),
+            intensity: 4.5,
+            range: 4.5,
+            innerConeAngle: 12,
+            outerConeAngle: 24,
+            castShadows: false,
+            layers
+        });
+        app.root.addChild(spot);
+        // Desde el techo y algo por delante, para iluminar la cara que mira al pasillo.
+        spot.setPosition(piece.x, 3.15, piece.z + 1.1);
+        spot.lookAt(piece.x, piece.y, piece.z);
+        // Un foco alumbra hacia su -Y y lookAt orienta su -Z: se gira 90° sobre X para alinearlos.
+        spot.rotateLocal(90, 0, 0);
+    }
+}
+
+/**
+ * Une en lotes estáticos las mallas fijas de la sala que comparten material (techo, muros, molduras, diorama):
+ * muchas menos llamadas de dibujo. Hay un grupo por zona (entrada, galería y límite del muro de paso); los de la
+ * entrada y la galería se dibujan en su propia capa, así el ocultamiento por zonas solo apaga la capa (instantáneo)
+ * en vez de rehacer el lote (un tirón de ~100 ms en móvil). Cada lote mide como máximo 6 m para que el motor siga
+ * descartando lo que queda fuera de cuadro. Devuelve una función que agrupa lo nuevo (los GLB llegan después).
+ */
+/** Verdadero si la entidad o algún antecesor es base de pedestal: la inspección nunca la copia ni la oculta. */
+function isBase(entity: Entity): boolean {
+    for (let node: Entity | null = entity; node; node = node.parent as Entity | null) {
+        if (node.tags.has('base')) {
+            return true;
+        }
+    }
+    return false;
+}
+
+function createStaticBatcher(app: AppBase, room: Entity, notBatched: Entity[]): () => void {
+    const layerIds = [zoneLayerNames.entrance, zoneLayerNames.gallery].map((name) => {
+        const layer = new Layer({ name });
+        app.scene.layers.push(layer);
+        return layer.id;
+    });
+    // Las luces solo iluminan las capas que tienen asignadas.
+    for (const light of app.root.findComponents('light') as LightComponent[]) {
+        light.layers = [...light.layers, ...layerIds];
+    }
+    const zones = {
+        entrance: app.batcher.addGroup('Sala estática · entrada', false, 6, undefined, [layerIds[0]]).id,
+        gallery: app.batcher.addGroup('Sala estática · galería', false, 6, undefined, [layerIds[1]]).id,
+        boundary: app.batcher.addGroup('Sala estática · límite', false, 6).id
+    };
+    return () => {
+        for (const render of room.findComponents('render') as RenderComponent[]) {
+            const instances = render.meshInstances;
+            if (
+                render.batchGroupId >= 0 ||
+                !instances.length ||
+                instances.some((instance) => instance.skinInstance) ||
+                (!isBase(render.entity) &&
+                    notBatched.some((entity) => render.entity === entity || render.entity.isDescendantOf(entity)))
+            ) {
+                continue;
+            }
+            const minZ = Math.min(...instances.map((instance) => instance.aabb.getMin().z));
+            const maxZ = Math.max(...instances.map((instance) => instance.aabb.getMax().z));
+            render.batchGroupId = minZ > 4.12 ? zones.entrance : maxZ < 3.88 ? zones.gallery : zones.boundary;
+        }
+    };
+}
+// Puerta de paso entre el brazo de entrada (z > 4) y la galería.
+const passageDoor = { x: 9, z: 4 };
+
+/**
+ * La puerta de paso es opaca (video en escritorio, imagen en móvil): desde un lado no se ve nada del otro.
+ * Mientras el visitante está a más de ~1,5 m de la puerta, deja de dibujar las mallas fijas de la sala que quedan
+ * enteras del lado opuesto (la entrada si está en la galería, la galería si está en la entrada) y las recupera
+ * al acercarse, por si cruza. La puerta y los muros del límite siguen siempre visibles.
+ * No libera memoria (las texturas son compartidas); ahorra llamadas de dibujo y sombreado. En un Redmi Note 13 Pro,
+ * mirando hacia la puerta, ocultar la entrada pasó de 15–38 a 47–53 fps.
+ */
+export function mountEntranceCulling(app: AppBase, camera: Entity): void {
+    // Mallas enteras de cada lado del muro de paso (z = 4), con un margen para dejar fuera el propio muro.
+    const onSide = {
+        entrance: (render: RenderComponent) =>
+            render.meshInstances.every((instance) => instance.aabb.getMin().z > passageDoor.z + 0.12),
+        gallery: (render: RenderComponent) =>
+            render.meshInstances.every((instance) => instance.aabb.getMax().z < passageDoor.z - 0.12)
+    };
+    // La cámara del visitante también dibuja las capas de los lotes de cada zona.
+    const zoneLayers = {
+        entrance: app.scene.layers.getLayerByName(zoneLayerNames.entrance),
+        gallery: app.scene.layers.getLayerByName(zoneLayerNames.gallery)
+    };
+    const visitorCamera = camera.camera;
+    if (visitorCamera) {
+        visitorCamera.layers = [
+            ...visitorCamera.layers,
+            ...Object.values(zoneLayers).flatMap((layer) => (layer ? [layer.id] : []))
+        ];
+    }
+    const setZoneLayer = (side: keyof typeof zoneLayers, enabled: boolean): void => {
+        const layer = zoneLayers[side];
+        if (layer) {
+            layer.enabled = enabled;
+        }
+    };
+    let hiddenSide: keyof typeof onSide | null = null;
+    let hidden: RenderComponent[] = [];
+    const onUpdate = (): void => {
+        const room = app.root.findByName(roomName) as Entity | null;
+        if (!room) {
+            return;
+        }
+        const eye = camera.getPosition();
+        const distance = Math.hypot(eye.x - passageDoor.x, eye.z - passageDoor.z);
+        // Histéresis (1,5 m para mostrar, 1,8 m para ocultar): evita encender y apagar en el borde.
+        const far = distance > (hiddenSide ? 1.5 : 1.8);
+        const wanted = far ? (eye.z > passageDoor.z ? 'gallery' : 'entrance') : null;
+        if (wanted === hiddenSide) {
+            return;
+        }
+        hidden.forEach((render) => (render.enabled = true));
+        hidden = [];
+        if (hiddenSide) {
+            setZoneLayer(hiddenSide, true);
+        }
+        hiddenSide = wanted;
+        if (wanted) {
+            // Lo agrupado en lotes se oculta apagando su capa; lo demás (piezas, flechas), una a una. Se recalcula
+            // en cada cambio: el diorama y los modelos se cargan después y también cuentan.
+            setZoneLayer(wanted, false);
+            hidden = (room.findComponents('render') as RenderComponent[]).filter(
+                (render) =>
+                    render.enabled &&
+                    render.batchGroupId < 0 &&
+                    render.meshInstances.length > 0 &&
+                    onSide[wanted](render)
+            );
+            hidden.forEach((render) => (render.enabled = false));
+        }
+    };
+    app.on('update', onUpdate);
+    app.on('destroy', () => app.off('update', onUpdate));
+}
 // Muro que divide el brazo de entrada de la sala (z = 4, de pared a pared: x 6…12); entre ambos tramos queda un hueco de 1,8 m centrado en x = 9.
 const passageWalls = [
     { x: 7, z: 4, halfX: 1, halfZ: 0.08 },
