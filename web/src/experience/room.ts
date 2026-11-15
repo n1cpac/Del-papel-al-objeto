@@ -11,6 +11,7 @@ import {
     MeshInstance,
     PIXELFORMAT_SRGBA8,
     SEMANTIC_TANGENT,
+    SHADOW_PCF3_32F,
     StandardMaterial,
     Texture,
     Vec2,
@@ -236,6 +237,11 @@ function mediaTexture(app: AppBase, name: string, mipmaps: boolean): Texture {
     });
 }
 
+/** Pulso lento (0…1, ciclo de 4 s) con el que la puerta "respira"; lo comparten su brillo y su resplandor. */
+function portalPulse(): number {
+    return 0.5 + 0.5 * Math.sin((performance.now() / 4000) * Math.PI * 2);
+}
+
 /** Crea la malla en forma de arco para que el video de la puerta siga exactamente la geometría del arco 3D. */
 function createArchPortalMesh(app: AppBase): Mesh {
     const rx = 0.976;
@@ -312,6 +318,15 @@ function addDoorVideo(app: AppBase, parent: Entity): void {
     // Sin iluminación: la puerta se ve con su brillo propio, igual desde ambos lados.
     surface.useLighting = false;
     surface.update();
+    // Escritorio: la puerta "respira" (su brillo sube y baja lentamente; solo cambia un valor del material).
+    // En móvil la puerta queda fija.
+    if (!window.matchMedia('(pointer: coarse)').matches) {
+        const onPulse = (): void => {
+            surface.emissiveIntensity = 1 + 0.35 * portalPulse();
+        };
+        app.on('update', onPulse);
+        app.on('destroy', () => app.off('update', onPulse));
+    }
 
     const portal = new Entity('Puerta · Carta de Yugi');
     portal.setLocalPosition(9, 0, 4);
@@ -1130,9 +1145,10 @@ const zoneLayerNames = { entrance: 'Zona · entrada', gallery: 'Zona · galería
 /**
  * Escritorio: iluminación de acento. Un foco cálido y cerrado sobre cada objeto y panel (luz de museo); la luz
  * general (ambiente y direccionales) baja para que los focos se noten: con la luz original apenas se distinguían.
- * Para no perder rendimiento: siete focos sin sombras y de alcance corto (se descartaron cuatro luces de plafón que
- * costaban mucho y casi no se veían). El motor reparte las luces por zonas de pantalla (clustered lighting) y cada
- * píxel solo calcula las que lo alcanzan. En móvil no se crean.
+ * La luz ambiente es más oscura y algo cálida (penumbra natural de interior) y los focos proyectan sombras suaves.
+ * Para no perder rendimiento: siete focos de alcance corto que comparten un único atlas de sombras (clustered
+ * lighting: cada píxel solo calcula los focos que lo alcanzan); se descartaron cuatro luces de plafón que costaban
+ * mucho y casi no se veían. En móvil no se crea nada de esto.
  */
 export function mountDesktopLighting(app: AppBase): void {
     if (window.matchMedia('(pointer: coarse)').matches) {
@@ -1146,37 +1162,76 @@ export function mountDesktopLighting(app: AppBase): void {
             return layer ? [layer.id] : [];
         })
     ];
-    // Valores ajustados viendo la sala: penumbra legible con charcos de luz sobre los objetos.
-    app.scene.ambientLight.set(0.44, 0.44, 0.44);
+    // Valores ajustados viendo la sala: penumbra legible y cálida, con charcos de luz sobre los objetos.
+    app.scene.ambientLight.set(0.34, 0.31, 0.28);
+    // Sombras de los focos en un atlas compartido; PCF 3×3 da bordes suaves a costo moderado.
+    app.scene.lighting.shadowsEnabled = true;
+    app.scene.lighting.shadowAtlasResolution = 2048;
+    app.scene.lighting.shadowType = SHADOW_PCF3_32F;
     const mainLight = app.root.findByName('Luz principal') as Entity | null;
     const fillLight = app.root.findByName('Luz de relleno') as Entity | null;
     if (mainLight?.light) {
-        mainLight.light.intensity = 0.7;
+        mainLight.light.intensity = 0.55;
     }
     if (fillLight?.light) {
-        fillLight.light.intensity = 0.35;
+        fillLight.light.intensity = 0.28;
     }
 
     const { intro, manga, deck, yuji, gon, miku, coleccion } = piecesById;
     for (const piece of [intro, manga, deck, yuji, gon, miku, coleccion]) {
+        // El panel de introducción cuelga en el muro (y 1,01…2,63 m): desde el foco abarca ~37° en vertical, así que
+        // se apunta al punto medio de ese ángulo (2,06 m sobre el muro) con un cono más abierto, para iluminar el
+        // recuadro completo; con el ajuste de las piezas su borde superior quedaba en penumbra.
+        const isIntroPanel = piece === intro;
         const spot = new Entity(`Foco · ${piece.name}`);
         spot.addComponent('light', {
             type: 'spot',
             color: new Color().fromString('#ffd9a8'),
-            intensity: 4.5,
+            // El panel de introducción es claro y queda más cerca del foco: con 4,5 se veía demasiado brillante.
+            intensity: isIntroPanel ? 3.2 : 4.5,
             range: 4.5,
-            innerConeAngle: 12,
-            outerConeAngle: 24,
-            castShadows: false,
+            innerConeAngle: isIntroPanel ? 20 : 12,
+            outerConeAngle: isIntroPanel ? 30 : 24,
+            castShadows: true,
+            // Sesgo ajustado viendo la sala: sin él aparecían rayas (shadow acne) sobre las piezas.
+            shadowBias: 0.2,
+            normalOffsetBias: 0.05,
             layers
         });
         app.root.addChild(spot);
         // Desde el techo y algo por delante, para iluminar la cara que mira al pasillo.
         spot.setPosition(piece.x, 3.15, piece.z + 1.1);
-        spot.lookAt(piece.x, piece.y, piece.z);
+        spot.lookAt(piece.x, isIntroPanel ? 2.06 : piece.y, isIntroPanel ? 4.16 : piece.z);
         // Un foco alumbra hacia su -Y y lookAt orienta su -Z: se gira 90° sobre X para alinearlos.
         spot.rotateLocal(90, 0, 0);
     }
+
+    // Resplandor de la puerta de paso: una luz naranja a cada lado del arco, que tiñe piso, muros y techo cercanos
+    // y respira con el mismo pulso que la imagen. Sin sombras y de alcance corto.
+    const glows = [4.55, 3.45].map((z) => {
+        const glow = new Entity('Resplandor · puerta de paso');
+        glow.addComponent('light', {
+            type: 'omni',
+            color: new Color().fromString('#ff7a2e'),
+            intensity: 1.5,
+            range: 3.6,
+            castShadows: false,
+            layers
+        });
+        glow.setLocalPosition(passageDoor.x, 1.6, z);
+        app.root.addChild(glow);
+        return glow;
+    });
+    const onGlowPulse = (): void => {
+        const intensity = 1.1 + 0.9 * portalPulse();
+        glows.forEach((glow) => {
+            if (glow.light) {
+                glow.light.intensity = intensity;
+            }
+        });
+    };
+    app.on('update', onGlowPulse);
+    app.on('destroy', () => app.off('update', onGlowPulse));
 }
 
 /**
