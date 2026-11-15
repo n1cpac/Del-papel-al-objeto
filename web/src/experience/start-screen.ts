@@ -38,9 +38,11 @@ function saveSetting(key: string, value: string): void {
 /** Menú inicial, ajustes de calidad y secuencia de bienvenida. */
 export function mountStartScreen(app: AppBase, camera: Entity, music: Music): void {
     const screen = required<HTMLElement>('#start-screen');
+    const startBanner = required<HTMLElement>('.start-banner');
     const hud = required<HTMLElement>('#experience-hud');
     const banner = required<HTMLElement>('#start-brand');
     const topbar = required<HTMLElement>('.topbar');
+    const thankyou = required<HTMLElement>('#thankyou-screen');
     const enter = required<HTMLButtonElement>('#start-enter');
     const optionsToggle = required<HTMLButtonElement>('#start-options-toggle');
     const optionsBackdrop = required<HTMLElement>('#start-options-backdrop');
@@ -207,16 +209,66 @@ export function mountStartScreen(app: AppBase, camera: Entity, music: Music): vo
 
         welcome.hidden = false;
         await wait(4000);
+        if (!started) {
+            return;
+        }
         welcome.classList.add('is-leaving');
         await wait(reducedMotion ? 0 : 700);
         welcome.hidden = true;
         welcome.classList.remove('is-leaving');
     };
     enter.addEventListener('click', onStart);
+
+    let completing = false;
+    const onTourComplete = async (): Promise<void> => {
+        if (completing) {
+            return;
+        }
+        completing = true;
+        setExitConfirm(false);
+        walk.paused = true;
+        welcome.hidden = true;
+        welcome.classList.remove('is-leaving');
+
+        const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        const fadeDuration = reducedMotion ? 0 : 650;
+        thankyou.hidden = false;
+        void thankyou.offsetWidth;
+        requestAnimationFrame(() => thankyou.classList.add('is-visible'));
+        await wait(fadeDuration);
+
+        // Mientras la pantalla de agradecimiento cubre la vista, restablece el menú y la cámara al inicio.
+        banner.style.transition = '';
+        banner.style.transform = '';
+        banner.style.transformOrigin = '';
+        banner.classList.add('intro-brand');
+        startBanner.append(banner);
+        hud.classList.add('is-intro');
+        hud.classList.remove('is-landing');
+        screen.hidden = false;
+        screen.classList.remove('is-exiting');
+        menu.hidden = false;
+        menu.classList.remove('is-leaving');
+        enter.disabled = false;
+        optionsToggle.disabled = false;
+        started = false;
+        walk.resetPose(9, 1.7, 9.15, 0, 0);
+        music.play(tracks.menu);
+
+        await wait(2600);
+        thankyou.classList.remove('is-visible');
+        await wait(fadeDuration);
+        thankyou.hidden = true;
+        completing = false;
+        enter.focus();
+    };
+    app.on('tour:complete', onTourComplete);
+
     // Suena desde el primer gesto en el menú (el navegador no permite audio antes).
     music.play(tracks.menu);
 
     app.on('destroy', () => {
+        app.off('tour:complete', onTourComplete);
         window.removeEventListener('resize', applyResolution);
         window.removeEventListener('keydown', onOptionsKey);
         resolution.removeEventListener('change', onResolution);

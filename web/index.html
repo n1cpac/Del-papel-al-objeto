@@ -148,9 +148,16 @@
         <div id="piece-label" class="piece-label" role="group" aria-label="Objeto interactivo" hidden>
             <span id="piece-label-name" class="piece-label-name"></span>
             <button id="piece-interact" type="button" class="piece-interact">
-                Explorar objeto <kbd class="desktop-help">E</kbd>
+                <span id="piece-interact-text">Explorar objeto</span> <kbd class="desktop-help">E</kbd>
             </button>
         </div>
+        <section id="thankyou-screen" class="thankyou-screen" aria-live="polite" hidden>
+            <div class="thankyou-card">
+                <p class="start-eyebrow">FIN DEL RECORRIDO</p>
+                <h2 class="thankyou-title">¡Gracias por asistir a esta exposición!</h2>
+                <p class="thankyou-subtitle">Del papel al objeto · Volviendo al menú principal…</p>
+            </div>
+        </section>
         <section id="piece-panel" class="piece-panel" role="dialog" aria-labelledby="piece-panel-title" hidden>
             <button id="piece-panel-close" type="button" class="piece-panel-close" aria-label="Cerrar cédula">×</button>
             <div id="piece-panel-body"></div>

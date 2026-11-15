@@ -17,6 +17,8 @@ export type Piece = {
      * no añade zona de exclusión (el muro ya bloquea) y en la inspección solo se acerca o aleja, sin girar.
      */
     onWall?: boolean;
+    /** Marca la puerta de salida final para terminar el recorrido al interactuar. */
+    isExit?: boolean;
 };
 
 export const piecesById = {
@@ -25,7 +27,7 @@ export const piecesById = {
         name: 'Introducción a la colección',
         x: 7.05,
         z: 4.3,
-        y: 1.65,
+        y: 1.82,
         onWall: true,
         // Textos del guion curatorial (Lugar A) y de la ficha de colección (Momentos 1 y 4).
         fields: [
@@ -47,9 +49,9 @@ export const piecesById = {
         audio: { src: './audio/piezas/manga.mp3', gain: 0.45 },
         station: 'B · El papel, el origen',
         name: 'Tomo de manga de Yu-Gi-Oh!',
-        x: 10.4,
+        x: 10.35,
         z: -0.72,
-        y: 1.18,
+        y: 1.21,
         status: 'Adquisición propuesta · pieza aún no disponible',
         fields: [
             ['Tipo de objeto', 'Publicación editorial gráfica (tankōbon)'],
@@ -66,9 +68,9 @@ export const piecesById = {
         audio: { src: './audio/piezas/deck.mp3' },
         station: 'C · Del personaje al producto',
         name: 'Deck estructurado de Kaiba',
-        x: 7.8,
+        x: 7.65,
         z: -0.72,
-        y: 1.22,
+        y: 1.11,
         fields: [
             ['Tipo de objeto', 'Cartas de TCG'],
             ['Autor / creador', 'Konami'],
@@ -85,9 +87,9 @@ export const piecesById = {
         audio: { src: './audio/piezas/yuji.mp3' },
         station: 'C · Del personaje al producto',
         name: 'Funko Pop Yuji Itadori #1111',
-        x: 5.4,
+        x: 4.75,
         z: -0.72,
-        y: 1.15,
+        y: 1.38,
         fields: [
             ['Tipo de objeto', 'Figura coleccionable'],
             ['Autor / creador', 'Funko'],
@@ -104,9 +106,9 @@ export const piecesById = {
         audio: { src: './audio/piezas/gon.mp3' },
         station: 'C · Del personaje al producto',
         name: 'Funko Pop Gon Freecss #651',
-        x: 3,
+        x: 2.65,
         z: -0.72,
-        y: 1.15,
+        y: 1.38,
         fields: [
             ['Tipo de objeto', 'Figura coleccionable'],
             ['Autor / creador', 'Funko'],
@@ -125,7 +127,7 @@ export const piecesById = {
         name: 'Peluche de Hatsune Miku',
         x: -0.2,
         z: -0.72,
-        y: 1.15,
+        y: 1.31,
         fields: [
             ['Tipo de objeto', 'Peluche / figura de tela'],
             ['Autor / creador', 'Crypton Future Media'],
@@ -137,6 +139,18 @@ export const piecesById = {
         ],
         description: 'Figura textil de la cantante virtual Hatsune Miku con capas de tela en pelo y traje.',
         detail: 'Representa la transición de lo digital a lo tangible dentro de la colección.'
+    },
+    salida: {
+        station: 'E · Fin del recorrido',
+        name: 'Puerta de salida',
+        x: -5.68,
+        z: 2.2,
+        y: 1.25,
+        onWall: true,
+        isExit: true,
+        fields: [],
+        description: '',
+        detail: ''
     }
 } satisfies Record<string, Piece>;
 

@@ -83,6 +83,11 @@ Antes de cerrar cada pieza se deberán registrar sus datos de identificación y 
 | 6 | Ajustar interfaz móvil, legibilidad, carga y accesibilidad básica. | Versión adaptable revisada en los dispositivos disponibles. |
 | 7 | Corregir problemas, publicar y documentar uso y actualización. | Enlace compartible y README actualizado con instrucciones reales. |
 
+## Estado actual
+
+- **Completado:** sala en L de 144 m² con arquitectura modular (`hallway_diorama.glb`), techo artesonado, iluminación, puerta-portal de video en arco, stands `psx_tv_stand.glb`, infografía vertical, paneles individuales por objeto, cédulas curatoriales, audio ambiental y por pieza, modo de inspección 3D, portada adaptable y puerta de salida final con pantalla de agradecimiento.
+- **Pendiente:** únicamente reemplazar los 5 modelos geométricos provisionales de los objetos (*Yu-Gi-Oh!* manga, Deck de Kaiba, Funko Yuji, Funko Gon y peluche de Hatsune Miku) por sus modelos `.glb` definitivos en `web/public/models/`.
+
 ## Criterios de cierre
 
 - Se puede entrar a la sala y recorrer libremente sus cinco estaciones.

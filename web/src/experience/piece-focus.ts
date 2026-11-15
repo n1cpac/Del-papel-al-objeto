@@ -28,11 +28,12 @@ export function mountPieceFocus(
     const label = document.querySelector<HTMLElement>('#piece-label');
     const labelName = document.querySelector<HTMLElement>('#piece-label-name');
     const interact = document.querySelector<HTMLButtonElement>('#piece-interact');
+    const interactText = document.querySelector<HTMLElement>('#piece-interact-text');
     const panel = document.querySelector<HTMLElement>('#piece-panel');
     const panelBody = document.querySelector<HTMLElement>('#piece-panel-body');
     const close = document.querySelector<HTMLButtonElement>('#piece-panel-close');
     const camera = cameraEntity.camera;
-    if (!label || !labelName || !interact || !panel || !panelBody || !close || !camera) {
+    if (!label || !labelName || !interact || !interactText || !panel || !panelBody || !close || !camera) {
         throw new Error('Falta la interfaz de piezas.');
     }
 
@@ -72,13 +73,25 @@ export function mountPieceFocus(
         inspector.close();
     };
 
-    interact.addEventListener('click', () => focused && openPanel(focused));
+    const activatePiece = (piece: Piece): void => {
+        if (piece.isExit) {
+            label.classList.remove('is-focused');
+            label.hidden = true;
+            focused = null;
+            closePanel();
+            app.fire('tour:complete');
+            return;
+        }
+        openPanel(piece);
+    };
+
+    interact.addEventListener('click', () => focused && activatePiece(focused));
     close.addEventListener('click', closePanel);
     const onKey = (event: KeyboardEvent): void => {
         if (event.code === 'Escape') {
             closePanel();
         } else if ((event.code === 'KeyE' || event.code === 'Enter') && focused && panel.hidden) {
-            openPanel(focused);
+            activatePiece(focused);
         }
     };
     window.addEventListener('keydown', onKey);
@@ -102,8 +115,8 @@ export function mountPieceFocus(
         let best: Piece | null = null;
         let bestOffset = Infinity;
         for (const piece of pieces) {
-            // Las piezas de muro solo se enfocan desde su cara, no a través del muro.
-            if (piece.onWall && eye.z < piece.z) {
+            // Las piezas de muro sur solo se enfocan desde su cara (z mayor que la suya), no a través del muro.
+            if (piece.onWall && !piece.isExit && eye.z < piece.z) {
                 continue;
             }
             anchor.set(piece.x, piece.y, piece.z);
@@ -133,6 +146,7 @@ export function mountPieceFocus(
             .add(anchor.set(best.x, best.y, best.z));
         camera.worldToScreen(side, screen);
         labelName.textContent = best.name;
+        interactText.textContent = best.isExit ? 'Salir de la exposición' : 'Explorar objeto';
         label.classList.add('is-focused');
         label.style.left = `${Math.max(12, Math.min(screen.x, width - label.offsetWidth - 12))}px`;
         label.style.top = `${screen.y}px`;

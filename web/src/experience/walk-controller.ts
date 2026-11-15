@@ -32,6 +32,16 @@ export class WalkController extends Script {
     /** Bloquea solo la mirada: el arrastre queda libre para otra interacción y se puede seguir caminando. */
     lookLocked = false;
 
+    resetPose(x: number, y: number, z: number, pitch = 0, yaw = 0): void {
+        this.pitch = pitch;
+        this.yaw = yaw;
+        this.stepPhase = 0;
+        this.bobWeight = 0;
+        this.entity.setPosition(x, y, z);
+        this.entity.setLocalEulerAngles(pitch, yaw, 0);
+        this.lastSafe.set(x, y, z);
+    }
+
     initialize(): void {
         const canvas = this.app.graphicsDevice.canvas;
         this.keyboardMouse.attach(canvas);

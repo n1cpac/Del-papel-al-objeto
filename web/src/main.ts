@@ -65,6 +65,16 @@ light.addComponent('light', { type: 'directional', color: Color.WHITE, intensity
 light.setLocalEulerAngles(48, 28, 0);
 app.root.addChild(light);
 
+const fillLight = new Entity('Luz de relleno');
+fillLight.addComponent('light', {
+    type: 'directional',
+    color: new Color().fromString('#fff6ea'),
+    intensity: 0.55,
+    castShadows: false
+});
+fillLight.setLocalEulerAngles(52, -152, 0);
+app.root.addChild(fillLight);
+
 app.start();
 const pedestals = buildRoom(app);
 const camera = createVisitorCamera(app);
