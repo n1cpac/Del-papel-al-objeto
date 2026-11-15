@@ -389,8 +389,20 @@ function addInfographicStand(
 ): void {
     const stand = addPedestal(parent, 'Infografía · colección japonesa', x, z, standTargets, [1.38, 1, 0.92]);
     addBox(stand, 'Infografía · zócalo', [0, 0.9, 0], [1.48, 0.07, 0.28], materials.ceilingBeam).tags.add('base');
-    addBox(stand, 'Infografía · soporte izquierdo', [-0.68, 1.04, 0], [0.08, 0.28, 0.22], materials.ceilingAccent).tags.add('base');
-    addBox(stand, 'Infografía · soporte derecho', [0.68, 1.04, 0], [0.08, 0.28, 0.22], materials.ceilingAccent).tags.add('base');
+    addBox(
+        stand,
+        'Infografía · soporte izquierdo',
+        [-0.68, 1.04, 0],
+        [0.08, 0.28, 0.22],
+        materials.ceilingAccent
+    ).tags.add('base');
+    addBox(
+        stand,
+        'Infografía · soporte derecho',
+        [0.68, 1.04, 0],
+        [0.08, 0.28, 0.22],
+        materials.ceilingAccent
+    ).tags.add('base');
     addBox(stand, 'Infografía · marco', [0, 1.96, 0], [1.42, 2.06, 0.08], materials.ceilingBeam).tags.add('base');
     addBox(stand, 'Infografía · borde', [0, 1.96, 0.01], [1.36, 2, 0.07], materials.stations.E).tags.add('base');
 
@@ -416,13 +428,7 @@ function addInteractionArrow(parent: Entity, piece: Piece, accent: StandardMater
     return arrow;
 }
 
-function addBook(
-    parent: Entity,
-    x: number,
-    z: number,
-    materials: MaterialSet,
-    standTargets: StandPlacement[]
-): Entity {
+function addBook(parent: Entity, x: number, z: number, materials: MaterialSet, standTargets: StandPlacement[]): Entity {
     const book = addPedestal(parent, 'Pieza: tomo de manga', x, z, standTargets);
     addBox(book, 'Bloque de páginas', [0, 1.21, 0], [0.48, 0.68, 0.11], materials.paper);
     addBox(book, 'Portada provisional del manga', [0, 1.22, 0.067], [0.48, 0.68, 0.035], materials.book);
@@ -430,13 +436,7 @@ function addBook(
     return book;
 }
 
-function addDeck(
-    parent: Entity,
-    x: number,
-    z: number,
-    materials: MaterialSet,
-    standTargets: StandPlacement[]
-): Entity {
+function addDeck(parent: Entity, x: number, z: number, materials: MaterialSet, standTargets: StandPlacement[]): Entity {
     const deck = addPedestal(parent, 'Pieza: deck de cartas', x, z, standTargets);
     addBox(deck, 'Deck de Kaiba (provisional)', [0, 1.11, 0], [0.36, 0.48, 0.27], materials.card);
     addBox(deck, 'Frente de la caja', [0, 1.11, 0.143], [0.3, 0.39, 0.012], materials.red);
@@ -773,7 +773,8 @@ function extractDioramaParts(resource: ContainerResource): DioramaParts | null {
     const door = byName('Door_TrimSheetMAT_0');
 
     const floorMaterial = (floorMesh?.findComponent('render') as RenderComponent | null)?.meshInstances[0]?.material;
-    const wallpaperMaterial = (wallPaper?.findComponent('render') as RenderComponent | null)?.meshInstances[0]?.material;
+    const wallpaperMaterial = (wallPaper?.findComponent('render') as RenderComponent | null)?.meshInstances[0]
+        ?.material;
 
     // Iluminación cálida suave en las pantallas de las lámparas murales.
     for (const matAsset of resource.materials) {
@@ -815,17 +816,22 @@ function extractDioramaParts(resource: ContainerResource): DioramaParts | null {
     };
 }
 
-function populateDioramaArchitecture(
-    app: AppBase,
-    room: Entity,
-    materials: MaterialSet,
-    parts: DioramaParts
-): void {
+function populateDioramaArchitecture(app: AppBase, room: Entity, materials: MaterialSet, parts: DioramaParts): void {
     const architecture = new Entity('Arquitectura · pasillo diorama');
     room.addChild(architecture);
 
     // Piso continuo de madera en ambos brazos de la L (y = 0,002 para evitar solapamiento con el respaldo).
-    addTexturedFloorRect(app, architecture, 'Piso madera · brazo horizontal', -6, 12, -2, 4, 0.002, parts.floorMaterial);
+    addTexturedFloorRect(
+        app,
+        architecture,
+        'Piso madera · brazo horizontal',
+        -6,
+        12,
+        -2,
+        4,
+        0.002,
+        parts.floorMaterial
+    );
     addTexturedFloorRect(app, architecture, 'Piso madera · brazo entrada', 6, 12, 4, 10, 0.002, parts.floorMaterial);
 
     // Alfombra 3D continua guiando el recorrido desde entrada/salida hasta el giro a la izquierda.
@@ -910,8 +916,22 @@ function populateDioramaArchitecture(
         ['oeste', 1.4]
     ] as const) {
         addArchway(architecture, `Arco · galería ${label}`, x, 1, 90, 2.06, 1.1, 1, parts);
-        addSpandrelFace(architecture, `Enjuta galería ${label} · este`, corridorSpandrel, materials.ceilingBeam, [x + 0.12, 0, 1], 90);
-        addSpandrelFace(architecture, `Enjuta galería ${label} · oeste`, corridorSpandrel, materials.ceilingBeam, [x - 0.12, 0, 1], -90);
+        addSpandrelFace(
+            architecture,
+            `Enjuta galería ${label} · este`,
+            corridorSpandrel,
+            materials.ceilingBeam,
+            [x + 0.12, 0, 1],
+            90
+        );
+        addSpandrelFace(
+            architecture,
+            `Enjuta galería ${label} · oeste`,
+            corridorSpandrel,
+            materials.ceilingBeam,
+            [x - 0.12, 0, 1],
+            -90
+        );
     }
 }
 
@@ -1000,8 +1020,14 @@ export function buildRoom(app: AppBase): Map<Piece, Entity> {
         [intro, addIntroImage(app, room, materials)],
         [manga, addBook(room, manga.x, manga.z, materials, standTargets)],
         [deck, addDeck(room, deck.x, deck.z, materials, standTargets)],
-        [yuji, addFigure(room, 'Pieza: Funko Yuji', yuji.x, yuji.z, materials.red, materials.dark, materials, standTargets)],
-        [gon, addFigure(room, 'Pieza: Funko Gon', gon.x, gon.z, materials.green, materials.teal, materials, standTargets)],
+        [
+            yuji,
+            addFigure(room, 'Pieza: Funko Yuji', yuji.x, yuji.z, materials.red, materials.dark, materials, standTargets)
+        ],
+        [
+            gon,
+            addFigure(room, 'Pieza: Funko Gon', gon.x, gon.z, materials.green, materials.teal, materials, standTargets)
+        ],
         [miku, addPlush(room, miku.x, miku.z, materials, standTargets)]
     ]);
 
@@ -1053,12 +1079,25 @@ const displayKeepOuts = [
     ...passageWalls
 ];
 
+let dynamicKeepOut: { x: number; z: number; radius: number } | null = null;
+
+export function setDynamicKeepOut(keepOut: { x: number; z: number; radius: number } | null): void {
+    dynamicKeepOut = keepOut;
+}
+
 export function canWalkTo(position: Vec3): boolean {
     if (!isInsideGallery(position)) {
         return false;
     }
 
     const visitorRadius = 0.32;
+    if (
+        dynamicKeepOut &&
+        Math.hypot(position.x - dynamicKeepOut.x, position.z - dynamicKeepOut.z) < dynamicKeepOut.radius + visitorRadius
+    ) {
+        return false;
+    }
+
     return !displayKeepOuts.some(
         (display) =>
             Math.abs(position.x - display.x) < display.halfX + visitorRadius &&

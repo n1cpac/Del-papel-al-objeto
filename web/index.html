@@ -23,10 +23,28 @@
         <canvas id="application-canvas" aria-label="Sala 3D de la exposición Del papel al objeto"></canvas>
         <main id="experience-hud" class="hud is-intro" aria-label="Información de navegación">
             <header class="topbar">
-                <button id="exit-tour" class="exit-button" type="button" aria-haspopup="dialog" aria-expanded="false">
-                    Salir
-                </button>
+                <div class="topbar-actions">
+                    <button
+                        id="guide-toggle"
+                        class="guide-button"
+                        type="button"
+                        aria-haspopup="dialog"
+                        aria-expanded="false"
+                    >
+                        Guía (A-E)
+                    </button>
+                    <button
+                        id="exit-tour"
+                        class="exit-button"
+                        type="button"
+                        aria-haspopup="dialog"
+                        aria-expanded="false"
+                    >
+                        Salir
+                    </button>
+                </div>
             </header>
+            <div id="npc-status-pill" class="npc-status-pill" hidden></div>
             <footer class="control-card">
                 <span class="desktop-help">Moverse: WASD / flechas <i>·</i> Mirar: clic y arrastre del mouse</span>
                 <span class="mobile-help">Moverse: joystick izquierdo <i>·</i> Mirar: arrastrar a la derecha</span>
@@ -143,13 +161,50 @@
         </section>
         <div id="welcome-message" class="welcome-message" aria-live="polite" hidden>
             <p>Bienvenido</p>
-            <span>Puedes ver el orden del recorrido a tu derecha</span>
+            <span>Habla con el guía frente a ti o abre "Guía (A-E)" arriba a la derecha</span>
         </div>
         <div id="piece-label" class="piece-label" role="group" aria-label="Objeto interactivo" hidden>
             <span id="piece-label-name" class="piece-label-name"></span>
             <button id="piece-interact" type="button" class="piece-interact">
                 <span id="piece-interact-text">Explorar objeto</span> <kbd class="desktop-help">E</kbd>
             </button>
+        </div>
+        <div id="npc-label" class="piece-label" role="group" aria-label="Guía de la exposición" hidden>
+            <span id="npc-label-name" class="piece-label-name">Guía de la sala</span>
+            <button id="npc-interact" type="button" class="piece-interact">
+                <span id="npc-interact-text">Hablar con el guía</span> <kbd class="desktop-help">E</kbd>
+            </button>
+        </div>
+        <section id="npc-dialog" class="npc-dialog" role="dialog" aria-labelledby="npc-dialog-title" hidden>
+            <div class="npc-dialog-header">
+                <div>
+                    <p id="npc-dialog-stage" class="piece-station">Guía curatorial</p>
+                    <h2 id="npc-dialog-title" class="npc-dialog-title"></h2>
+                </div>
+                <button id="npc-dialog-close" type="button" class="options-close" aria-label="Minimizar diálogo">
+                    ×
+                </button>
+            </div>
+            <p id="npc-dialog-text" class="npc-dialog-text"></p>
+            <p id="npc-dialog-subtext" class="npc-dialog-subtext" hidden></p>
+            <div id="npc-dialog-extra" class="npc-dialog-extra" hidden></div>
+            <div id="npc-dialog-glossary" class="glossary-box" hidden></div>
+            <div id="npc-dialog-actions" class="npc-dialog-actions"></div>
+        </section>
+        <div id="guide-backdrop" class="options-backdrop">
+            <section
+                id="guide-dialog"
+                class="start-options guide-dialog"
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="guide-dialog-title"
+            >
+                <header class="options-header">
+                    <h2 id="guide-dialog-title">Guía de la exposición</h2>
+                    <button id="guide-close" class="options-close" type="button" aria-label="Cerrar guía">×</button>
+                </header>
+                <div id="guide-body" class="guide-body"></div>
+            </section>
         </div>
         <section id="thankyou-screen" class="thankyou-screen" aria-live="polite" hidden>
             <div class="thankyou-card">
