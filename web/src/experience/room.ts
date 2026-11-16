@@ -96,21 +96,6 @@ function addBox(
     return entity;
 }
 
-function addSphere(
-    parent: Entity,
-    name: string,
-    position: [number, number, number],
-    scale: [number, number, number],
-    surface: StandardMaterial
-): Entity {
-    const entity = new Entity(name);
-    entity.addComponent('render', { type: 'sphere', material: surface });
-    entity.setLocalPosition(...position);
-    entity.setLocalScale(...scale);
-    parent.addChild(entity);
-    return entity;
-}
-
 function addWall(
     parent: Entity,
     name: string,
@@ -146,6 +131,8 @@ type StandPlacement = {
 // Plinto clásico (models/pedestal/pedestal-museo.gltf): mide 1,44 × 1,86 m; se escala para que su tapa quede a
 // 0,87 m, la altura sobre la que ya están apoyadas las piezas.
 const plinthScale = 0.87 / 1.86;
+// Cara superior real de la tapa del plinto (y = 1,8647 en el glTF): ~2 mm sobre 0,87.
+const plinthTop = 1.8647 * plinthScale;
 
 function addObjectPanel(
     app: AppBase,
@@ -476,38 +463,38 @@ function addInteractionArrow(parent: Entity, piece: Piece, accent: StandardMater
     return arrow;
 }
 
-function addBook(parent: Entity, x: number, z: number, materials: MaterialSet, standTargets: StandPlacement[]): Entity {
-    const book = addPedestal(parent, 'Pieza: tomo de manga', x, z, standTargets);
-    addBox(book, 'Bloque de páginas', [0, 1.21, 0], [0.48, 0.68, 0.11], materials.paper);
-    addBox(book, 'Portada provisional del manga', [0, 1.22, 0.067], [0.48, 0.68, 0.035], materials.book);
-    addBox(book, 'Lomo del tomo', [-0.22, 1.22, -0.03], [0.05, 0.68, 0.12], materials.red);
-    return book;
-}
-
-function addDeck(parent: Entity, x: number, z: number, materials: MaterialSet, standTargets: StandPlacement[]): Entity {
-    const deck = addPedestal(parent, 'Pieza: deck de cartas', x, z, standTargets);
-    addBox(deck, 'Deck de Kaiba (provisional)', [0, 1.11, 0], [0.36, 0.48, 0.27], materials.card);
-    addBox(deck, 'Frente de la caja', [0, 1.11, 0.143], [0.3, 0.39, 0.012], materials.red);
-    return deck;
-}
-
-function addFigure(
+/**
+ * Pieza sobre plinto con su modelo GLB. `base` es el punto del GLB (sin escalar) que se apoya en el centro del stand:
+ * centro en x/z y la cara inferior en y (datos de la skill inspect-glb).
+ */
+function addModelPiece(
+    app: AppBase,
     parent: Entity,
     id: string,
+    file: string,
     x: number,
     z: number,
-    body: StandardMaterial,
-    hair: StandardMaterial,
-    materials: MaterialSet,
-    standTargets: StandPlacement[]
+    standTargets: StandPlacement[],
+    scale: number | [number, number, number],
+    base: [number, number, number],
+    turned = false
 ): Entity {
-    const figure = addPedestal(parent, id, x, z, standTargets);
-    addSphere(figure, `${id}:cabeza`, [0, 1.5, 0], [0.35, 0.34, 0.32], materials.book);
-    addBox(figure, `${id}:cabello`, [0, 1.66, 0], [0.34, 0.13, 0.32], hair);
-    addBox(figure, `${id}:torso`, [0, 1.19, 0], [0.3, 0.34, 0.24], body);
-    addBox(figure, `${id}:pierna-izquierda`, [-0.09, 0.93, 0], [0.12, 0.12, 0.18], materials.dark);
-    addBox(figure, `${id}:pierna-derecha`, [0.09, 0.93, 0], [0.12, 0.12, 0.18], materials.dark);
-    return figure;
+    const piece = addPedestal(parent, id, x, z, standTargets);
+    app.assets.loadFromUrl(`${import.meta.env.BASE_URL}models/${file}`, 'container', (error, asset) => {
+        if (error || !asset?.resource) {
+            console.warn(`No se pudo cargar el modelo de la pieza (${file}).`, error);
+            return;
+        }
+        const model = (asset.resource as ContainerResource).instantiateRenderEntity();
+        const [sx, sy, sz] = typeof scale === 'number' ? [scale, scale, scale] : scale;
+        model.setLocalScale(sx, sy, sz);
+        // `turned` gira el modelo 180° (su frente miraba a -Z); el giro también invierte el centrado en x/z.
+        const side = turned ? 1 : -1;
+        model.setLocalEulerAngles(0, turned ? 180 : 0, 0);
+        model.setLocalPosition(side * base[0] * sx, plinthTop - base[1] * sy, side * base[2] * sz);
+        piece.addChild(model);
+    });
+    return piece;
 }
 
 function addPlush(app: AppBase, parent: Entity, x: number, z: number, standTargets: StandPlacement[]): Entity {
@@ -1082,15 +1069,56 @@ export function buildRoom(app: AppBase): Map<Piece, Entity> {
     // Piezas del brazo horizontal sobre plintos clásicos (models/pedestal/pedestal-museo.gltf).
     const pedestals = new Map<Piece, Entity>([
         [intro, addIntroImage(app, room, materials)],
-        [manga, addBook(room, manga.x, manga.z, materials, standTargets)],
-        [deck, addDeck(room, deck.x, deck.z, materials, standTargets)],
+        // Manga ×3,8 (0,68 m de alto) y figuras ×0,45 (~0,85 m); el deck usa la escala por eje pedida.
+        [
+            manga,
+            addModelPiece(
+                app,
+                room,
+                'Pieza: tomo de manga',
+                'manga.glb',
+                manga.x,
+                manga.z,
+                standTargets,
+                3.8,
+                [0, -0.09, 0],
+                true
+            )
+        ],
+        [
+            deck,
+            addModelPiece(
+                app,
+                room,
+                'Pieza: deck de cartas',
+                'deck.glb',
+                deck.x,
+                deck.z,
+                standTargets,
+                // La escala interna del nodo del GLB no llega a la escena: se escala la malla en bruto
+                // (1,38 × 2,44 × 0,5, centrada en x/z, base en y = -1). Escala pedida ×1,2 y el ancho ×1,2 más.
+                [0.086 * 1.2 * 1.2, 0.12 * 1.2, 0.082 * 1.2],
+                [0, -1, 0],
+                true
+            )
+        ],
         [
             yuji,
-            addFigure(room, 'Pieza: Funko Yuji', yuji.x, yuji.z, materials.red, materials.dark, materials, standTargets)
+            addModelPiece(
+                app,
+                room,
+                'Pieza: Funko Yuji',
+                'Yuji.glb',
+                yuji.x,
+                yuji.z,
+                standTargets,
+                0.45,
+                [0, -0.952, 0]
+            )
         ],
         [
             gon,
-            addFigure(room, 'Pieza: Funko Gon', gon.x, gon.z, materials.green, materials.teal, materials, standTargets)
+            addModelPiece(app, room, 'Pieza: Funko Gon', 'Gon.glb', gon.x, gon.z, standTargets, 0.45, [0, -0.952, 0])
         ],
         [miku, addPlush(app, room, miku.x, miku.z, standTargets)]
     ]);
