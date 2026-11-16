@@ -1066,6 +1066,8 @@ export function buildRoom(app: AppBase): Map<Piece, Entity> {
     const standTargets: StandPlacement[] = [];
     addInfographicStand(app, room, -3.45, -0.72, materials, standTargets);
 
+    // En teléfono, Yuji y Gon cargan copias con texturas JPEG de 1024 px (*-movil.glb: ~1 MB en vez de 8-10 MB).
+    const mobileModel = window.matchMedia('(pointer: coarse)').matches ? '-movil' : '';
     // Piezas del brazo horizontal sobre plintos clásicos (models/pedestal/pedestal-museo.gltf).
     const pedestals = new Map<Piece, Entity>([
         [intro, addIntroImage(app, room, materials)],
@@ -1108,7 +1110,7 @@ export function buildRoom(app: AppBase): Map<Piece, Entity> {
                 app,
                 room,
                 'Pieza: Funko Yuji',
-                'Yuji.glb',
+                `Yuji${mobileModel}.glb`,
                 yuji.x,
                 yuji.z,
                 standTargets,
@@ -1118,7 +1120,17 @@ export function buildRoom(app: AppBase): Map<Piece, Entity> {
         ],
         [
             gon,
-            addModelPiece(app, room, 'Pieza: Funko Gon', 'Gon.glb', gon.x, gon.z, standTargets, 0.45, [0, -0.952, 0])
+            addModelPiece(
+                app,
+                room,
+                'Pieza: Funko Gon',
+                `Gon${mobileModel}.glb`,
+                gon.x,
+                gon.z,
+                standTargets,
+                0.45,
+                [0, -0.952, 0]
+            )
         ],
         [miku, addPlush(app, room, miku.x, miku.z, standTargets)]
     ]);

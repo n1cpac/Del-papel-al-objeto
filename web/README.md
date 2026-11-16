@@ -146,3 +146,4 @@ El README principal del repositorio contiene el guion de experiencia, el plano c
 | 2026-11-15 | Deck de Kaiba a tamaño real: 6,5 cm de ancho, 10 cm de alto y 3 cm de fondo. Las piezas con modelo se apoyan en la cara superior real del plinto (y ≈ 0,872 en vez de 0,87), así el deck ya no queda incrustado. |
 | 2026-11-15 | Deck de Kaiba: vuelve a la escala X 0,086 · Y 0,12 · Z 0,082, ahora ×1,2 (~14 × 35 × 5 cm). La escala interna del nodo del GLB no se aplica en escena, así que se apoya con la base de la malla en bruto (y = -1) y ya no queda incrustado. |
 | 2026-11-15 | Deck de Kaiba 1,2× más ancho (~17 cm); alto y fondo sin cambios. |
+| 2026-11-15 | Teléfono: Yuji y Gon cargan `Yuji-movil.glb` (1,2 MB en vez de 10,3) y `Gon-movil.glb` (0,6 MB en vez de 7,5), copias con las texturas pasadas de PNG 2048 a JPEG 1024 (calidad 85); el escritorio mantiene los originales. |
